@@ -253,6 +253,26 @@ last values it had ever read) - a failed request is now treated as a lost connec
 instead of waiting out its full timeout, and the app returns to the device list with a clear reason
 instead of quietly showing stale data.
 
+## Wear OS companion (early)
+
+A separate app for Wear OS watches (Pixel Watch 2 and similar), sideloaded like the phone app -
+not on the Play Store. Set up entirely from the phone: App settings → "Connect to watch" sends the
+key of every saved scooter, plus a few app-level settings, to a paired watch over the Wear Data
+Layer API.
+
+- **Normal case - relay**: while the phone is connected to a scooter, the watch shows the same
+  remaining range, trip distance, battery and ride time the phone's overlay/widget show, live.
+- **Phone out of reach - direct connection**: tap a scooter on the watch to have the watch connect
+  to it directly over its own Bluetooth, independent of the phone. This never happens on its own -
+  only on that explicit tap - so it never competes with the phone for the scooter's one BLE slot
+  unless you deliberately connect both at once. Shows battery, remaining range and lock state, and
+  offers lock/unlock and horn/find-my (where the model supports it). Locking is blocked below 40%
+  watch battery, so a nearly-dead watch can never lock the scooter with the phone out of reach to
+  undo it.
+
+Not built yet: a vehicle-settings screen (ride mode, lights, etc.), documents, and an in-app
+updater for the watch app itself - all planned, none of them present in this version.
+
 ## Getting started
 
 1. Download the APK from the [Releases](https://github.com/desperado0044/xiaomi-scooter-link/releases)

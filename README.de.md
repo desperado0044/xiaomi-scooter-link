@@ -267,6 +267,26 @@ fehlgeschlagener Zugriff gilt jetzt sofort als verlorene Verbindung, statt sein 
 abzuwarten, und die App kehrt mit klarem Grund zur Geräteliste zurück, statt still veraltete Daten
 zu zeigen.
 
+## Wear-OS-Begleit-App (früher Stand)
+
+Eine eigene App für Wear-OS-Uhren (Pixel Watch 2 und ähnliche), wie die Handy-App per Sideload
+installiert – nicht über den Play Store. Die Einrichtung läuft komplett über das Handy: App-Einstellungen
+→ „Mit Uhr verbinden" schickt den Schlüssel jedes gespeicherten Scooters plus ein paar App-Einstellungen
+an eine gekoppelte Uhr, über die Wear-Data-Layer-API.
+
+- **Normalfall – Relay**: solange das Handy mit einem Scooter verbunden ist, zeigt die Uhr dieselbe
+  Restreichweite, Fahrstrecke, Akkustand und Fahrzeit, die auch das Overlay/Widget des Handys zeigen, live.
+- **Handy nicht in der Nähe – Direktverbindung**: Antippen eines Scooters auf der Uhr lässt sie sich
+  direkt über ihr eigenes Bluetooth verbinden, unabhängig vom Handy. Das passiert nie von selbst –
+  nur durch diesen bewussten Tap –, sodass sie dem Handy nie den einen Bluetooth-Platz des Scooters
+  streitig macht, außer man verbindet absichtlich beide gleichzeitig. Zeigt Akku, Restreichweite und
+  Sperrzustand, bietet Ent-/Verriegeln und Hupe/Suchen (falls vom Modell unterstützt). Sperren ist
+  unter 40 % Uhr-Akku blockiert, damit eine fast leere Uhr den Scooter nie sperren kann, ohne dass
+  das Handy in der Nähe wäre, um das rückgängig zu machen.
+
+Noch nicht gebaut: eine Fahrzeug-Einstellungsseite (Fahrmodus, Beleuchtung, etc.), Dokumente, und ein
+Auto-Update-Mechanismus für die Uhr-App selbst – alles geplant, aber in dieser Version noch nicht enthalten.
+
 ## Erste Schritte
 
 1. APK aus den [Releases](https://github.com/desperado0044/xiaomi-scooter-link/releases)
