@@ -279,26 +279,49 @@ Not built yet: documents on the watch - planned, not present in this version.
 
 ### Installing the watch app
 
-The watch app isn't on the Play Store and can't be installed from the phone - it's sideloaded via
-`adb` once, over Wi-Fi (Wear OS watches have no data-capable USB port):
+The watch app isn't on the Play Store and can't be installed from the phone - it's sideloaded once
+via `adb`. "Debugging" is simply Android's only official channel for an APK from outside the Play
+Store (on a phone, a browser + file manager + installer normally does this, which Wear OS doesn't
+have) - nothing about the app itself is actually being "debugged".
 
-1. On the watch: **Settings → System → About → tap the build number** several times to unlock
+**Over USB (simpler, if your watch supports it - e.g. Pixel Watch 2 via its charging puck):**
+
+1. Put the watch on its charging puck, plug the puck into your PC via USB.
+2. On the watch: **Settings → System → About → tap the build number** several times to unlock
    Developer options.
-2. **Settings → Developer options** → enable **"ADB debugging"** and **"Wireless debugging"**.
-3. Open **"Wireless debugging"** - it shows an IP:port and, under "Pair new device", a pairing
+3. **Settings → Developer options** → enable **"USB debugging"**.
+4. On your PC: `adb devices` should show the watch (confirm the one-time "Allow USB debugging?"
+   prompt on the watch - no code needed), then `adb install -r scooter-link-wear-X.X.apk`.
+
+**Over Wi-Fi (if you don't have a data-capable USB cable/puck):**
+
+1. Unlock Developer options as above, then enable **"ADB debugging"** and **"Wireless debugging"**.
+2. Open **"Wireless debugging"** - it shows an IP:port and, under "Pair new device", a pairing
    code (both change if the screen times out or debugging gets toggled off).
-4. On your PC:
+3. On your PC:
    ```
    adb pair <ip:port> <pairing code>
    adb connect <ip:port>
    adb -s <ip:port> install -r scooter-link-wear-X.X.apk
    ```
-5. On the phone, in Scooter Link: App settings → **"Connect to watch"** to push the saved
-   scooters' keys and settings over.
+   Pairing is normally a one-time step - as long as "Wireless debugging" stays on, later reconnects
+   only need `adb connect`, no code required again.
 
-Pairing is normally a one-time step - as long as "Wireless debugging" stays on, later reconnects
-only need `adb connect`, and after this first install the watch's own in-app updater handles new
-versions without adb at all.
+**Without a PC/adb (e.g. for someone else's watch you don't have in hand):**
+
+1. That person installs **"WearLoad"** or **"AnExplorer"** from the regular Play Store - directly
+   on the watch, both officially listed apps, no developer mode/adb needed.
+2. Get `scooter-link-wear-X.X.apk` onto their **phone** (link, email, cloud share, whatever works).
+3. Open the installed app on the watch - it shows a QR code / local Wi-Fi receiver; phone and watch
+   need to be on the same Wi-Fi. Send the APK from the phone to the watch from there; the watch
+   installs it directly.
+
+(The exact taps inside WearLoad/AnExplorer haven't been verified step by step - worth confirming
+when actually walking someone through it.)
+
+**Either way (all three paths), afterwards:** on the phone, in Scooter Link: App settings →
+**"Connect to watch"** to push the saved scooters' keys and settings over. After this first
+install, the watch's own in-app updater handles new versions without adb at all.
 
 ## Getting started
 

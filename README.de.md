@@ -294,26 +294,54 @@ Noch nicht gebaut: Dokumente auf der Uhr – geplant, in dieser Version noch nic
 ### Installation auf der Uhr
 
 Die Uhr-App ist nicht im Play Store und lässt sich nicht vom Handy aus installieren – sie wird
-einmalig per `adb` über WLAN aufgespielt (Wear-OS-Uhren haben keinen datenfähigen USB-Anschluss):
+einmalig per `adb` aufgespielt. „Debugging" ist bei Android schlicht der einzige offizielle Kanal für
+eine APK von außerhalb des Play Store (am Handy übernimmt das sonst Browser + Dateimanager +
+Installer, was Wear OS nicht hat) – es wird dabei nichts an der App „debuggt".
+
+**Per USB (einfacher, falls die Uhr das unterstützt – bei der Pixel Watch 2 z.B. über ihren
+Lade-Puck, der USB-Datenübertragung kann; laut Nutzerberichten, offiziell nicht groß beworben):**
 
 1. Auf der Uhr: **Einstellungen → System → Über → mehrmals auf die Build-Nummer tippen**, bis die
    Entwickleroptionen freigeschaltet sind.
-2. **Einstellungen → Entwickleroptionen** → „ADB-Debugging" und „Debugging über WLAN" aktivieren.
-3. „Debugging über WLAN" öffnen – zeigt eine IP:Port-Adresse und unter „Neues Gerät koppeln" einen
+2. **Einstellungen → Entwickleroptionen** → **„ADB-Debugging"** aktivieren (ein Schalter für beides,
+   kein separater „USB-Debugging"-Punkt).
+3. Uhr auf den Lade-Puck legen, Puck per USB an den PC anschließen (unter Windows ggf. die
+   [Google-USB-Treiber](https://developer.android.com/studio/run/win-usb) installieren, falls die
+   Uhr nicht erkannt wird).
+4. Am PC: `adb devices` sollte die Uhr zeigen; auf der Uhr einmalig den Dialog „USB-Debugging
+   zulassen?" bestätigen. Dann `adb install -r scooter-link-wear-X.X.apk`.
+
+**Per WLAN (falls kein USB-Datenkabel/-Puck vorhanden ist):**
+
+1. Wie oben Entwickleroptionen freischalten, dann „ADB-Debugging" und „Debugging über WLAN" aktivieren.
+2. „Debugging über WLAN" öffnen – zeigt eine IP:Port-Adresse und unter „Neues Gerät koppeln" einen
    Pairing-Code (beides ändert sich, wenn der Bildschirm-Timeout greift oder das Debugging aus- und
    wieder eingeschaltet wird).
-4. Am PC:
+3. Am PC:
    ```
    adb pair <ip:port> <pairing-code>
    adb connect <ip:port>
    adb -s <ip:port> install -r scooter-link-wear-X.X.apk
    ```
-5. Am Handy in Scooter Link: App-Einstellungen → **„Mit Uhr verbinden"**, um die Schlüssel der
-   gespeicherten Scooter und Einstellungen zu übertragen.
+   Das Pairing ist normalerweise einmalig – solange „Debugging über WLAN" an bleibt, reicht danach
+   `adb connect` ohne erneuten Code.
 
-Das Pairing ist normalerweise einmalig – solange „Debugging über WLAN" an bleibt, reicht danach
-`adb connect`. Nach dieser Erstinstallation übernimmt der In-App-Updater der Uhr künftige Versionen
-ganz ohne adb.
+**Ohne PC/adb (z.B. für eine andere Person, deren Uhr man nicht vor sich hat):**
+
+1. Die betreffende Person installiert **„WearLoad"** oder **„AnExplorer"** aus dem normalen Play
+   Store – direkt auf der Uhr, das sind offiziell gelistete Apps, kein Entwickler-/ADB-Modus nötig.
+2. Die `scooter-link-wear-X.X.apk` muss auf ihr **Handy** kommen (z.B. per Link, Mail oder
+   Cloud-Freigabe).
+3. Die installierte App auf der Uhr öffnen – sie zeigt einen QR-Code bzw. einen lokalen
+   WLAN-Empfänger; Handy und Uhr müssen im selben WLAN sein. Vom Handy aus die APK an die Uhr
+   schicken, die Uhr installiert sie direkt.
+
+(Die genauen Tippschritte innerhalb von WearLoad/AnExplorer sind nicht im Detail geprüft – bei
+Bedarf beim tatsächlichen Durchgehen klären.)
+
+**Danach** (alle drei Wege): Am Handy in Scooter Link: App-Einstellungen → **„Mit Uhr verbinden"**,
+um die Schlüssel der gespeicherten Scooter und Einstellungen zu übertragen. Nach dieser
+Erstinstallation übernimmt der In-App-Updater der Uhr künftige Versionen ganz ohne adb.
 
 ## Erste Schritte
 
