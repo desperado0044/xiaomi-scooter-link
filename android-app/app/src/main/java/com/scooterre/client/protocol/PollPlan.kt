@@ -31,7 +31,12 @@ object PollPlan {
 
     private val once = setOf("PRODUCTION_DATE", "ACTIVATION_DATE", "SCOOTER_SN", "BATTERY_SN", "FIRMWARE_VERSION", "BMS_FIRMWARE_VERSION")
     private val always = setOf("IS_RIDING", "RIDING_MODE", "BATTERY_LEVEL", "FAKE_SHUTDOWN_STATUS")
-    val TRIP = setOf("REMAINING_MILEAGE", "CURRENT_MILEAGE", "RIDING_TIME", "AVERAGE_SPEED", "HIGHEST_SPEED")
+    // The trip values split in two: the range overlay needs the rest and the odometer even with the app in the
+    // background (that's the whole point of it) - the other three are only ever shown on screen, so they have no
+    // reason to be read fast while nobody can see them (measured cause of a real battery drain, 2026-09-26/27: the
+    // last-open tab stayed "remembered" after backgrounding, so these kept polling every 2.5-10s for nothing).
+    private val restTrip = setOf("REMAINING_MILEAGE", "CURRENT_MILEAGE")
+    private val dashboardOnlyTrip = setOf("RIDING_TIME", "AVERAGE_SPEED", "HIGHEST_SPEED")
     private val medium = setOf(
         "IS_LOCKED", "ENERGY_RECOVERY", "IS_CHARGING", "FAULT", "BATTERY_STATUS", "BATTERY_TEMPERATURE",
         "SCOOTER_TEMPERATURE", "LOCK_WARNING", "CRUISE_IS_ON", "TAIL_LIGHT_IS_ON",
@@ -54,19 +59,24 @@ object PollPlan {
     /**
      * Milliseconds until [name] is due again, or null for "only once per connection". [stillScale] stretches the
      * intervals of values that only matter while parked (the refresh-rate setting: 1 = fastest); what the ride
-     * recording and the connection watchdog rely on is never stretched.
+     * recording and the connection watchdog rely on is never stretched. [appVisible] is false while the app is in
+     * the background (screen showing something else) - [overlayActive] additionally true only then, and only while
+     * the floating overlay is actually on screen, since that is the one thing in the background still worth reading
+     * for.
      */
-    fun intervalMs(name: String, riding: Boolean, tab: PollTab, stillScale: Double = 1.0): Long? {
+    fun intervalMs(name: String, riding: Boolean, tab: PollTab, stillScale: Double = 1.0, appVisible: Boolean = true, overlayActive: Boolean = false): Long? {
         fun s(ms: Long) = (ms * stillScale).toLong()
         val rideOrParked = if (riding) FAST_MS else s(PARKED_MS)
+        val tripTabOnScreen = appVisible && (tab == PollTab.OVERVIEW || tab == PollTab.RIDE)
         return when {
             name in once -> null
             name in always -> FAST_MS
             name == "TOTAL_MILEAGE" -> if (riding) FAST_MS else PARKED_MS
-            name in TRIP -> if (tab == PollTab.OVERVIEW || tab == PollTab.RIDE) rideOrParked else s(SLOW_MS)
+            name in restTrip -> if (tripTabOnScreen || overlayActive) rideOrParked else s(SLOW_MS)
+            name in dashboardOnlyTrip -> if (tripTabOnScreen) rideOrParked else s(SLOW_MS)
             name == "REMAINING_MILEAGE_ALGORITHM" ->
-                if (tab == PollTab.OVERVIEW || tab == PollTab.RIDE || tab == PollTab.BATTERY) rideOrParked else s(SLOW_MS)
-            name in batteryLive -> if (tab == PollTab.BATTERY) BATTERY_LIVE_MS else s(SLOW_MS)
+                if (tripTabOnScreen || (appVisible && tab == PollTab.BATTERY) || overlayActive) rideOrParked else s(SLOW_MS)
+            name in batteryLive -> if (appVisible && tab == PollTab.BATTERY) BATTERY_LIVE_MS else s(SLOW_MS)
             name in medium -> s(MEDIUM_MS)
             name in slow || isLogSlot(name) -> s(SLOW_MS)
             else -> s(DEFAULT_MS)

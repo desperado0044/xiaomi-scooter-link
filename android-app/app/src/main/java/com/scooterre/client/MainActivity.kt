@@ -8,7 +8,7 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.core.content.ContextCompat
 import com.scooterre.client.reminder.InsuranceReminders
 import com.scooterre.client.ui.ScooterApp
@@ -17,7 +17,10 @@ import com.scooterre.client.viewmodel.ScooterViewModel
 class MainActivity : FragmentActivity() {
 
     private val requestPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
-    private val viewModel: ScooterViewModel by viewModels()
+    // Owned by the application, not by this activity: see ScooterApplication.
+    private val viewModel: ScooterViewModel by lazy {
+        ViewModelProvider(application as ScooterApplication, ViewModelProvider.AndroidViewModelFactory.getInstance(application))[ScooterViewModel::class.java]
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +30,16 @@ class MainActivity : FragmentActivity() {
         setContent {
             ScooterApp(viewModel = viewModel)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        com.scooterre.client.service.OverlayBus.appVisible.value = true
+    }
+
+    override fun onStop() {
+        com.scooterre.client.service.OverlayBus.appVisible.value = false
+        super.onStop()
     }
 
     override fun onResume() {

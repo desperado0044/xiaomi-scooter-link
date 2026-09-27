@@ -75,6 +75,11 @@ internal class SettingsController(
         _state.update { it.copy(keepScreenOn = enabled) }
     }
 
+    fun setOverlay(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_OVERLAY, enabled).apply()
+        _state.update { it.copy(overlayEnabled = enabled) }
+    }
+
     fun toggleLanguage() {
         val next = if (_state.value.language == Lang.DE) Lang.EN else Lang.DE
         prefs.edit().putString(KEY_LANG, next.name).apply()
@@ -93,6 +98,7 @@ internal class SettingsController(
                 themeMode = runCatching { ThemeMode.valueOf(prefs.getString(KEY_THEME_MODE, null) ?: "SYSTEM") }.getOrDefault(ThemeMode.SYSTEM),
                 orientationMode = runCatching { OrientationMode.valueOf(prefs.getString(KEY_ORIENTATION_MODE, null) ?: "AUTO") }.getOrDefault(OrientationMode.AUTO),
                 keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON, true),
+                overlayEnabled = prefs.getBoolean(KEY_OVERLAY, false),
                 autoBrightness = prefs.getBoolean(KEY_AUTO_BRIGHTNESS, false),
                 units = runCatching { UnitSystem.valueOf(prefs.getString(KEY_UNITS, null) ?: "METRIC") }.getOrDefault(UnitSystem.METRIC),
                 autoConnect = prefs.getBoolean(KEY_AUTO_CONNECT, false),

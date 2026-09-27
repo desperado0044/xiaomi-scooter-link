@@ -129,9 +129,21 @@ no promise of support or of a schedule — this is a hobby project.
   time the app reads it, new rides are copied into a ride book on the phone (a short "n new rides imported"
   note shows for 5 seconds), grouped by day with distance, ride time and average speed. Rides that were
   already in the scooter when the ride book started have no date. Exportable as a text file. A ride that has
-  already dropped out of the scooter's slots before the app reads it again is lost.
+  already dropped out of the scooter's slots before the app reads it again is lost. The 5 slots used to be
+  re-read on a fixed timer, which could catch a still-growing ride mid-ride and log it several times over
+  (each snapshot slightly bigger than the last) - fixed: they're now only read right after connecting and
+  right when a ride ends. Existing ride books get a one-time automatic cleanup for this on first launch after
+  the update, collapsing such fragments back into the one real ride each group of them belongs to.
 - **Tire maintenance**: reminder on/off and interval (14–180 days) settable.
 - **Home-screen widget** with the last known status (battery, lock, range).
+- **Stays connected in the background** (a small ongoing notification, as Android requires for this): the
+  connection, live values and ride recording keep running with the app minimized or the screen off. A small,
+  **draggable overlay** can then show the range, the trip distance and the battery level on top of any other
+  app (e.g. a maps app) - off by default, switch it on in App settings (needs the "display over other apps"
+  permission, requested once); tap it to bring the app back, drag it to move it. Everything not needed for
+  that (the on-screen dashboard's own tabs, the battery tab's live readings) drops to a slow background pace
+  instead of continuing to poll for a screen nobody can see - this fixed a real background battery drain
+  (confirmed live: the app being killed for excessive background CPU use).
 
 <p align="center">
   <img src="docs/screenshots/02-overview.png" width="560" alt="Übersicht / Overview"><br>

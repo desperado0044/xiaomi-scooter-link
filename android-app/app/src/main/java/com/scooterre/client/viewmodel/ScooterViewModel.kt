@@ -28,6 +28,7 @@ import com.scooterre.client.protocol.RideWindow
 import com.scooterre.client.protocol.LiveRideTracker
 import com.scooterre.client.protocol.PollPlan
 import com.scooterre.client.protocol.PollTab
+import com.scooterre.client.protocol.RangeEstimate
 import com.scooterre.client.protocol.RideBook
 import com.scooterre.client.protocol.RideBookStore
 import com.scooterre.client.protocol.PropertyExplorer
@@ -45,6 +46,9 @@ import com.scooterre.client.protocol.BundleCrypto
 import com.scooterre.client.protocol.BundleFormats
 import com.scooterre.client.protocol.DocumentsBundle
 import com.scooterre.client.reminder.InsuranceReminders
+import com.scooterre.client.service.ConnectionService
+import com.scooterre.client.service.OverlayBus
+import com.scooterre.client.service.OverlayData
 import com.scooterre.client.reminder.InsuranceSchedule
 import com.scooterre.client.ui.Lang
 import com.scooterre.client.ui.resolveLang
@@ -58,6 +62,8 @@ import com.scooterre.client.update.UpdateDownloadResult
 import com.scooterre.client.update.UpdateInfo
 import com.scooterre.client.update.UpdateInstaller
 import com.scooterre.client.update.UpdateProblem
+import com.scooterre.client.ui.connectedChannelName
+import com.scooterre.client.ui.connectedNotificationText
 import com.scooterre.client.ui.modelDisplayName
 import com.scooterre.client.ui.propertyName
 import com.scooterre.client.ui.strings
@@ -67,6 +73,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -110,6 +117,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     private val prefs = application.getSharedPreferences("scooter_prefs", Context.MODE_PRIVATE)
     private val deviceRegistry = DeviceRegistry(application)
     private val batteryHistoryStore = BatteryHistoryStore(application)
+    private val rideBookStore = RideBookStore(application)
     private val documentStore = DocumentStore(application)
     private var protocol: MiProtocol? = null
     // Every property read/write/explore that depends on the current BLE connection launches into
@@ -141,6 +149,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                 orientationMode = runCatching { OrientationMode.valueOf(prefs.getString(KEY_ORIENTATION_MODE, null) ?: "AUTO") }
                     .getOrDefault(OrientationMode.AUTO),
                 keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON, true),
+                overlayEnabled = prefs.getBoolean(KEY_OVERLAY, false),
                 autoBrightness = prefs.getBoolean(KEY_AUTO_BRIGHTNESS, false),
                 units = runCatching { UnitSystem.valueOf(prefs.getString(KEY_UNITS, null) ?: "METRIC") }.getOrDefault(UnitSystem.METRIC),
                 autoConnect = prefs.getBoolean(KEY_AUTO_CONNECT, false),
@@ -192,6 +201,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     fun setConfirmCritical(enabled: Boolean) = settings.setConfirmCritical(enabled)
     fun setRideTracking(enabled: Boolean) = settings.setRideTracking(enabled)
     fun setKeepScreenOn(enabled: Boolean) = settings.setKeepScreenOn(enabled)
+    fun setOverlay(enabled: Boolean) = settings.setOverlay(enabled)
     fun toggleLanguage() = settings.toggleLanguage()
     fun setAppLock(enabled: Boolean) = settings.setAppLock(enabled)
 
@@ -210,8 +220,30 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     fun restoreBackup(uri: Uri, password: String?, withSettings: Boolean) = backups.restoreBackup(uri, password, withSettings)
     fun importBundle(uri: Uri, password: String?) = backups.importBundle(uri, password)
 
+    /** What the floating overlay shows (see OverlayController): remaining range at your own consumption if there is
+     * enough data, else the scooter's estimate, plus the scooter's trip distance; "Standby" while it sleeps. */
+    private fun overlayDataOf(state: UiState): OverlayData {
+        if (state.standby) return OverlayData(standby = true)
+        fun long(name: String): Long? = state.values[name]?.takeIf { it.ok }?.value as? Long
+        fun float(name: String): Float? = state.values[name]?.takeIf { it.ok }?.value as? Float
+        val units = state.units
+        val mode = long("RIDING_MODE")
+        val own = if (state.rideTracking && mode != null) long("BATTERY_LEVEL")?.let { RangeEstimate.rangeKm(it.toDouble(), state.modeStats[mode]) } else null
+        val restKm = own ?: float("REMAINING_MILEAGE")?.let { it * 0.01 }
+        val tripKm = float("CURRENT_MILEAGE")?.let { it * 0.01 }
+        val battery = long("BATTERY_LEVEL")
+        return OverlayData(
+            rest = restKm?.let { "%.0f %s".format(java.util.Locale.US, units.distance(it), units.distanceUnit) } ?: "",
+            trip = tripKm?.let { "%.1f %s".format(java.util.Locale.US, units.distance(it), units.distanceUnit) } ?: "",
+            battery = battery?.let { "$it %" } ?: "",
+        )
+    }
+
     init {
+        viewModelScope.launch { _state.map { overlayDataOf(it) }.distinctUntilChanged().collect { OverlayBus.data.value = it } }
+        viewModelScope.launch { _state.map { it.overlayEnabled }.distinctUntilChanged().collect { OverlayBus.enabled.value = it } }
         _state.update { it.copy(hasSavedLtmk = secureStore.loadLtmk(it.macAddress) != null) }
+        cleanupRideBookOnce()
         UpdateInstaller.cleanup(getApplication())
         // The last error messages go into the copyable diagnostics text (see Diagnostics).
         viewModelScope.launch { _state.map { it.error }.distinctUntilChanged().collect { message -> message?.let(Diagnostics::recordError) } }
@@ -320,6 +352,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                 connectAndLogin(device.mac, ltmk)
             } catch (e: Exception) {
                 android.util.Log.e("ScooterVM", "connectKnownDevice failed", e)
+                ConnectionService.stop(getApplication())
                 _state.update { it.copy(connectFailedMac = device.mac, connectFailedError = e.message ?: e.toString()) }
             } finally {
                 _state.update { it.copy(busy = false, busyMessage = "", connectingMac = null) }
@@ -627,6 +660,11 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                     knownDevices = deviceRegistry.list(),
                 )
             }
+            ConnectionService.start(
+                getApplication(), "Scooter Link",
+                connectedNotificationText(_state.value.language, _state.value.deviceName ?: modelDisplayName(_state.value.activeModel, _state.value.language)),
+                connectedChannelName(_state.value.language),
+            )
             initialReadDone = false
             refreshAll()
             startAutoRefresh()
@@ -648,6 +686,9 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     private var lastWidgetMs = 0L
     @Volatile private var initialReadDone = false
     @Volatile private var initialReadStartedMs = 0L
+    // Wakes the read loop early (tab switch, a value changing) instead of it having to poll for that - see
+    // startAutoRefresh's own comment on why polling every 100ms was a real background-CPU problem.
+    private val wakeSignal = Channel<Unit>(Channel.CONFLATED)
 
     /** The dashboard tells which tab is showing: its values are read at once, then kept fresh (see [PollPlan]). */
     fun onSectionShown(tab: PollTab) {
@@ -665,12 +706,18 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         }
         val now = System.currentTimeMillis()
         names.forEach { nextDueMs[it] = now }
+        wakeSignal.trySend(Unit)
     }
 
     private fun isRiding(): Boolean = ((_state.value.values["IS_RIDING"]?.takeIf { it.ok }?.value as? Long) ?: 0L) != 0L
 
-    private fun intervalFor(name: String): Long? =
-        PollPlan.intervalMs(name, isRiding(), visibleTab, _state.value.refreshRate.stillScale)
+    private fun intervalFor(name: String): Long? {
+        val appVisible = OverlayBus.appVisible.value
+        return PollPlan.intervalMs(
+            name, isRiding(), visibleTab, _state.value.refreshRate.stillScale,
+            appVisible = appVisible, overlayActive = !appVisible && OverlayBus.enabled.value,
+        )
+    }
 
     /** After the first full read (connect or the "Aktualisieren" button): everything is fresh, so the schedule starts over. */
     private fun scheduleAfterFullRead() {
@@ -687,6 +734,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     private fun dueNow(vararg names: String) {
         val now = System.currentTimeMillis()
         names.forEach { nextDueMs[it] = now }
+        wakeSignal.trySend(Unit)
     }
 
     /**
@@ -718,6 +766,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                 val now = System.currentTimeMillis()
                 var next: SpecProperty? = null
                 var mostLate = -1.0
+                var soonestDueMs = Long.MAX_VALUE
                 val sleeping = _state.value.standby
                 for (p in profile.all) {
                     if (p.name in profile.writeOnly) continue
@@ -725,7 +774,10 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                     if (sleeping && p.name != "FAKE_SHUTDOWN_STATUS") continue
                     val interval = intervalFor(p.name)
                     val due = nextDueMs[p.name] ?: if (interval == null) continue else now
-                    if (due > now) continue
+                    if (due > now) {
+                        if (due < soonestDueMs) soonestDueMs = due
+                        continue
+                    }
                     val late = (now - due).toDouble() / (interval ?: PollPlan.MEDIUM_MS)
                     if (late > mostLate) {
                         mostLate = late
@@ -733,7 +785,12 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                     }
                 }
                 if (next == null) {
-                    delay(100L)
+                    // Sleeps until the next value is actually due (capped, both ends) instead of polling every
+                    // 100ms regardless - that polling was measured causing the app to be killed in the background
+                    // for excessive CPU use (2026-09-26 system log: "excessive cpu ... limit=10"). wakeSignal cuts
+                    // in immediately for anything that can't wait (a tab opened, a value just changed).
+                    val sleepMs = (soonestDueMs - now).coerceIn(50L, 30_000L)
+                    withTimeoutOrNull(sleepMs) { wakeSignal.receive() }
                     continue
                 }
                 try {
@@ -795,12 +852,18 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
 
     /** The five ride-log slots are read together and only then compared with what the ride book has seen - a half
      * refreshed set (a ride moves records between slots) would look like rides appearing twice. */
+    /** The five slots are only ever read once right after connecting (catches up rides missed while disconnected)
+     * and once right when a ride ends (see the "IS_RIDING" case above) - never on a fixed timer. A slot holds the
+     * CURRENTLY ACTIVE ride's record too, growing as it's ridden - a fixed re-read (the previous ~60s timer) kept
+     * catching it mid-growth and, since the ride book only recognizes an unchanged record as "already seen", every
+     * slightly bigger snapshot looked like a brand new ride. Confirmed live, 2026-09-27: one real ride fragmented
+     * into 9 book entries, 0.2 km to 2.6 km, a minute apart each. Not re-scheduling here (see [nextDueMs.remove])
+     * is what stops that; only a real ride ending arms it again. */
     private suspend fun readRideLogSlots(spec: SpecClient, profile: SpecProfile) {
-        val now = System.currentTimeMillis()
         for (p in profile.all.filter { PollPlan.isLogSlot(it.name) }) {
             val result = noteData(withContext(Dispatchers.IO) { spec.get(p) })
             if (result.ok) _state.update { it.copy(values = it.values + (p.name to result)) }
-            nextDueMs[p.name] = now + (intervalFor(p.name) ?: PollPlan.SLOW_MS)
+            nextDueMs.remove(p.name)
         }
         importRideBook()
     }
@@ -816,14 +879,17 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
      * afterwards instead of disconnect()'s usual clean slate: the user did nothing here and should
      * see why they're suddenly back at the list instead of wondering if they misclicked. */
     private fun connectionDied(mac: String, message: String) {
-        disconnect()
+        teardown(stopService = false)
         _state.update { it.copy(connectFailedMac = mac, connectFailedError = message) }
         // The scooter resets its Bluetooth when it wakes up (link timeout, seen live 2026-09-25) - so one automatic
         // reconnect, after a moment for it to start advertising again. Only once a minute: if that fails the red tile
         // stays, exactly as before, instead of looping.
-        val device = deviceRegistry.list().firstOrNull { it.mac.equals(mac, ignoreCase = true) } ?: return
+        val device = deviceRegistry.list().firstOrNull { it.mac.equals(mac, ignoreCase = true) }
         val now = SystemClock.elapsedRealtime()
-        if (now - lastAutoReconnectMs < 60_000L) return
+        if (device == null || now - lastAutoReconnectMs < 60_000L) {
+            ConnectionService.stop(getApplication())
+            return
+        }
         lastAutoReconnectMs = now
         Diagnostics.note("connection lost - reconnecting once")
         viewModelScope.launch {
@@ -838,7 +904,12 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
      * session properly (or switch to a different scooter) instead of the only alternative being
      * to kill the app, which skips this cleanup and is what causes the next connect attempt to
      * need its automatic retry. */
-    fun disconnect() {
+    fun disconnect() = teardown(stopService = true)
+
+    /** [stopService] false while the app is about to reconnect by itself: the service stays, so the process stays in
+     * the foreground for the new connection (starting it again from the background is not always allowed). */
+    private fun teardown(stopService: Boolean) {
+        if (stopService) ConnectionService.stop(getApplication())
         stopAutoRefresh()
         connectionScope?.cancel()
         connectionScope = null
@@ -949,8 +1020,6 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         _state.update { it.copy(modeStats = batteryHistoryStore.windowStats(it.macAddress), rideLog = batteryHistoryStore.rideLog(it.macAddress)) }
     }
 
-    private val rideBookStore = RideBookStore(application)
-
     /** Copies rides the scooter has newly logged (LOG_1..LOG_5) into the ride book - see [RideBook]. Only when all
      * five slots were read successfully, so a failed read is never mistaken for "the log is empty". */
     private fun importRideBook() {
@@ -1002,6 +1071,17 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         val mac = _state.value.macAddress
         batteryHistoryStore.clear(mac)
         _state.update { it.copy(modeStats = batteryHistoryStore.windowStats(mac), rideLog = batteryHistoryStore.rideLog(mac), batteryLog = batteryHistoryStore.dailyLog(mac)) }
+    }
+
+    /** One-time cleanup, run once per phone (see [KEY_RIDE_BOOK_CLEANUP_DONE]) for every saved scooter - not just
+     * the currently active one, so it also cleans up a device nobody has connected to yet on this phone. See
+     * [RideBook.mergeGrowthFragments]'s own comment for what it fixes and why this never needs to run twice. */
+    private fun cleanupRideBookOnce() {
+        if (prefs.getBoolean(KEY_RIDE_BOOK_CLEANUP_DONE, false)) return
+        val removed = deviceRegistry.list().sumOf { rideBookStore.mergeGrowthFragments(it.mac) }
+        prefs.edit().putBoolean(KEY_RIDE_BOOK_CLEANUP_DONE, true).apply()
+        Diagnostics.note("ride book cleanup: merged away $removed fragment(s)")
+        _state.update { it.copy(rideBook = rideBookStore.entries(it.macAddress)) }
     }
 
     fun refreshOne(property: SpecProperty) = launchBusy(null, connectionScope ?: viewModelScope) {
@@ -1092,6 +1172,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     private fun updateBusyMessage(message: String) = _state.update { it.copy(busyMessage = message) }
 
     override fun onCleared() {
+        ConnectionService.stop(getApplication())
         protocol?.dispose()
         super.onCleared()
     }

@@ -1052,3 +1052,18 @@ fun formatRideLog(raw: String, lang: Lang, units: UnitSystem = UnitSystem.METRIC
     }
     return if (records.isEmpty()) strings(lang).noRidesYet else records.joinToString("; ")
 }
+
+/** Texts of the ongoing "connected" notification. Kept out of [AppStrings]: its constructor call is already at the JVM's
+ * method size limit, and every further field breaks loading the class in the unit tests. */
+fun connectedChannelName(lang: Lang) = if (lang == Lang.DE) "Verbindung zum Scooter" else "Scooter connection"
+
+fun connectedNotificationText(lang: Lang, name: String) = if (lang == Lang.DE) "Verbunden mit $name" else "Connected to $name"
+
+/** Texts of the floating overlay setting (kept out of [AppStrings], see [connectedChannelName]). */
+fun overlayLabel(lang: Lang) = if (lang == Lang.DE) "Overlay mit Restkilometern" else "Range overlay"
+
+fun overlayHint(lang: Lang) = if (lang == Lang.DE) {
+    "Ein kleines, verschiebbares Fenster über anderen Apps (z. B. der Navigation) mit Restkilometern und der Fahrstrecke, solange der Scooter verbunden ist und die App nicht im Vordergrund steht. Braucht die Berechtigung „Über anderen Apps einblenden“."
+} else {
+    "A small window you can drag, over other apps (e.g. navigation), with the remaining range and the trip distance while the scooter is connected and the app is not on screen. Needs the \"display over other apps\" permission."
+}

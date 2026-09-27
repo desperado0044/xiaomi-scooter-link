@@ -81,6 +81,7 @@ data class SettingsActions(
     val onSetOrientationMode: (OrientationMode) -> Unit,
     val onSetAutoBrightness: (Boolean) -> Unit,
     val onSetKeepScreenOn: (Boolean) -> Unit,
+    val onSetOverlay: (Boolean) -> Unit,
     val onSetUnits: (UnitSystem) -> Unit,
     val onSetRefreshRate: (RefreshRate) -> Unit,
     val onSetAutoConnect: (Boolean) -> Unit,
@@ -184,6 +185,16 @@ fun AppSettingsContent(state: UiState, s: AppStrings, settings: SettingsActions,
         )
         SettingsSwitchCard(s.autoBrightnessLabel, s.autoBrightnessHint, state.autoBrightness, settings.onSetAutoBrightness)
         SettingsSwitchCard(s.keepScreenOnLabel, s.keepScreenOnHint, state.keepScreenOn, settings.onSetKeepScreenOn)
+        SettingsSwitchCard(overlayLabel(state.language), overlayHint(state.language), state.overlayEnabled) { on ->
+            // The overlay needs the "display over other apps" permission: the system settings page for it opens once.
+            if (on && !android.provider.Settings.canDrawOverlays(context)) {
+                context.startActivity(
+                    android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + context.packageName))
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+            settings.onSetOverlay(on)
+        }
         SettingsRadioCard(
             title = s.unitsLabel,
             hint = null,

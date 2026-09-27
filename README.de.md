@@ -137,9 +137,22 @@ ist ein Hobbyprojekt.
   „n neue Fahrten importiert" erscheint 5 Sekunden), nach Tagen gruppiert mit Strecke, Fahrzeit und
   Durchschnittstempo. Fahrten, die schon im Scooter waren, als das Fahrtenbuch begann, haben kein Datum. Als
   Textdatei exportierbar. Eine Fahrt, die aus den Plätzen des Scooters herausgerutscht ist, bevor die App ihn
-  wieder ausliest, geht verloren.
+  wieder ausliest, geht verloren. Die 5 Plätze wurden früher fest im Takt neu gelesen, was eine noch laufende
+  Fahrt mitten im Wachsen erwischen und mehrfach speichern konnte (jeder Schnappschuss etwas größer als der
+  vorherige) - behoben: Sie werden jetzt nur noch direkt nach dem Verbinden und direkt bei Fahrtende gelesen.
+  Bestehende Fahrtenbücher bekommen beim ersten Start nach dem Update automatisch eine einmalige Bereinigung
+  dafür, die solche Bruchstücke wieder zu der einen echten Fahrt zusammenführt, zu der sie gehören.
 - **Reifenwartung**: Erinnerung ein/aus und Intervall (14–180 Tage) einstellbar.
 - **Homescreen-Widget** mit dem letzten Stand (Akku, Sperre, Reichweite).
+- **Bleibt im Hintergrund verbunden** (mit einer kleinen Dauerbenachrichtigung, die Android dafür verlangt):
+  Verbindung, Live-Werte und Fahrtaufzeichnung laufen weiter, auch mit minimierter App oder ausgeschaltetem
+  Bildschirm. Ein kleines, **verschiebbares Overlay** kann dann Reichweite, Fahrstrecke und Akkustand über
+  jeder anderen App anzeigen (z. B. einer Navigations-App) - standardmäßig aus, in den App-Einstellungen
+  einschaltbar (braucht die Berechtigung „Über anderen Apps einblenden", einmalig angefragt); antippen holt
+  die App zurück, verschieben mit dem Finger. Alles, was dafür nicht gebraucht wird (die Tabs des Dashboards,
+  die Live-Werte des Akku-Tabs), fällt im Hintergrund auf einen langsamen Takt zurück, statt für einen
+  Bildschirm weiterzulaufen, den niemand sieht - das behebt einen echten Akku-Verbrauch im Hintergrund (live
+  bestätigt: die App wurde wegen zu hoher Hintergrund-CPU-Last beendet).
 
 <p align="center">
   <img src="docs/screenshots/02-overview.png" width="560" alt="Übersicht / Overview"><br>

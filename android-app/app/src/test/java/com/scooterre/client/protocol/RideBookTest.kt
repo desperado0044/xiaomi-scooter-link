@@ -45,4 +45,41 @@ class RideBookTest {
         val a = rec(100, 30)
         assertEquals(emptyList<RideRecord>(), RideBook.newRecords(listOf(a), listOf(a)))
     }
+
+    // Minute 0 is deliberately never used here: RideBookEntry treats savedMs<=0 as "no time known" (see its own
+    // doc comment), so a real dated entry always starts at least one minute after some epoch.
+    private fun at(min: Long, d: Int, km: Int) = RideBookEntry(1_000_000L + min * 60_000L, rec(d, km))
+
+    @Test
+    fun growingSnapshotsOfOneRideCollapseToTheLastOne() {
+        val entries = listOf(at(0, 10, 2), at(1, 50, 5), at(2, 90, 8), at(3, 90, 9))
+        assertEquals(listOf(at(3, 90, 9)), RideBook.mergeGrowthFragments(entries))
+    }
+
+    @Test
+    fun twoRealRidesFarApartStaySeparate() {
+        val entries = listOf(at(0, 90, 9), at(45, 90, 9))
+        assertEquals(entries, RideBook.mergeGrowthFragments(entries))
+    }
+
+    @Test
+    fun gapsUpToHalfAnHourStillMerge() {
+        // Confirmed live, 2026-09-27: fragments of one real ride can be up to ~22 min apart (the read schedule
+        // only ever picks ONE overdue value at a time among ~50, so a re-read of the ride-log slots can be
+        // delayed well past its own 60s interval by contention with everything else that's also due).
+        val entries = listOf(at(0, 30, 12), at(29, 71, 225))
+        assertEquals(listOf(at(29, 71, 225)), RideBook.mergeGrowthFragments(entries))
+    }
+
+    @Test
+    fun aShrinkBreaksTheCluster() {
+        val entries = listOf(at(0, 90, 9), at(1, 30, 3))
+        assertEquals(entries, RideBook.mergeGrowthFragments(entries))
+    }
+
+    @Test
+    fun undatedEntriesAreLeftAlone() {
+        val undated = RideBookEntry(0, rec(50, 5))
+        assertEquals(listOf(undated, undated), RideBook.mergeGrowthFragments(listOf(undated, undated)))
+    }
 }

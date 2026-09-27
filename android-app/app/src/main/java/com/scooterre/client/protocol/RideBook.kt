@@ -56,6 +56,29 @@ object RideBook {
         }
         return fresh
     }
+
+    /**
+     * One-time cleanup for entries the old fixed read timing (fixed 2026-09-27, see [ScooterViewModel.readRideLogSlots])
+     * split into several growing snapshots of the same real ride, minutes apart: a run of dated entries where each one's
+     * distance and duration only ever grow, close enough together in time, is really one ride re-read mid-growth, not
+     * several - collapsed here into just the last (biggest, and closest to the ride's real end) one. Undated entries
+     * (savedMs<=0, from before the ride book had a clock) are left exactly as they are - there is no time to group them
+     * by. A real short ride immediately followed by another short ride can, in principle, look like one growing ride
+     * too and get merged away - accepted for a one-off cleanup of already-corrupted data; nothing recorded from now on
+     * can fragment like this in the first place, so this never needs to run again.
+     */
+    fun mergeGrowthFragments(entries: List<RideBookEntry>, maxGapMs: Long = 30 * 60_000L): List<RideBookEntry> {
+        val undated = entries.filter { it.savedMs <= 0 }
+        val dated = entries.filter { it.savedMs > 0 }.sortedBy { it.savedMs }
+        val merged = mutableListOf<RideBookEntry>()
+        for (e in dated) {
+            val prev = merged.lastOrNull()
+            val growsFromPrev = prev != null && e.savedMs - prev.savedMs in 0..maxGapMs &&
+                e.record.distanceTenthsKm >= prev.record.distanceTenthsKm && e.record.durationTenthsMin >= prev.record.durationTenthsMin
+            if (growsFromPrev) merged[merged.lastIndex] = e else merged += e
+        }
+        return undated + merged
+    }
 }
 
 /** The ride book per scooter, in the same plain prefs file as the other histories - none of it is secret. */
@@ -84,6 +107,15 @@ class RideBookStore(context: Context) {
 
     fun clear(mac: String) {
         prefs.edit().remove(KEY_BOOK + mac).remove(KEY_SEEN + mac).apply()
+    }
+
+    /** Runs [RideBook.mergeGrowthFragments] over the stored book and saves the result - returns how many entries
+     * were collapsed away. See that function's own comment for what this does and why. */
+    fun mergeGrowthFragments(mac: String): Int {
+        val before = entries(mac)
+        val after = RideBook.mergeGrowthFragments(before)
+        if (after.size != before.size) prefs.edit().putString(KEY_BOOK + mac, writeEntries(after)).apply()
+        return before.size - after.size
     }
 
     fun exportRaw(mac: String): String? = prefs.getString(KEY_BOOK + mac, null)

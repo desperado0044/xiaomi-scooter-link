@@ -163,25 +163,35 @@ class ScooterBleManager(private val context: Context) {
         // many IN A ROW, each having already had its own quick retry, is not: every property in a
         // sweep failing the same way is what a truly dead link looks like, not a one-off hiccup.
         const val HARD_FAILURE_THRESHOLD = 3
+
+        /** How long requestMtu/discoverServices/enableNotifications each wait for their callback before giving up -
+         * short: a working link answers in well under a second (measured), so this only ever costs time on a link
+         * that has already died, and the outer connect loop (see ScooterViewModel.connectAndLogin) tries again
+         * right after. */
+        const val POST_CONNECT_STEP_MS = 3_000L
     }
 
     /** Negotiates a larger ATT MTU (device reports 247 in the reference dump; the default
      * Android connection MTU of 23 is apparently too small for the scooter to accept the
      * channel-transport traffic at all). Returns the MTU the device actually granted, or -1. */
     @SuppressLint("MissingPermission")
+    /** Bounded like [connect] itself - the callback ([onMtuChanged]) sometimes just never fires when the
+     * link dies in this exact window (confirmed live, 2026-09-27: a disconnect landed here with no callback
+     * ever, hanging this call - and with it the whole connect attempt - forever). */
     suspend fun requestMtu(mtu: Int): Int {
         val g = gatt ?: return -1
         mtuDeferred = CompletableDeferred()
         if (!g.requestMtu(mtu)) return -1
-        return mtuDeferred!!.await()
+        return withTimeoutOrNull(POST_CONNECT_STEP_MS) { mtuDeferred!!.await() } ?: -1
     }
 
     @SuppressLint("MissingPermission")
+    /** Bounded for the same reason as [requestMtu]. */
     suspend fun discoverServices(): Boolean {
         servicesDeferred = CompletableDeferred()
         val ok = gatt?.discoverServices() ?: false
         if (!ok) return false
-        return servicesDeferred!!.await()
+        return withTimeoutOrNull(POST_CONNECT_STEP_MS) { servicesDeferred!!.await() } ?: false
     }
 
     fun findCharacteristic(serviceUuid: UUID, charUuid: UUID): BluetoothGattCharacteristic? =
@@ -220,7 +230,7 @@ class ScooterBleManager(private val context: Context) {
         @Suppress("DEPRECATION")
         val started = g.writeDescriptor(cccd)
         if (!started) return false
-        return descriptorDeferred!!.await()
+        return withTimeoutOrNull(POST_CONNECT_STEP_MS) { descriptorDeferred!!.await() } ?: false
     }
 
     /**

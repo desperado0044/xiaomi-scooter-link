@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Keeps the connection alive with the app in the background (ConnectionService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- The optional floating overlay with the remaining range (OverlayController). -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <!-- Android 13+: needed to show the optional insurance-plate reminders. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Lets the "Download update" button open the system installer (the user still confirms). -->
@@ -23,6 +28,7 @@
     </queries>
 
     <application
+        android:name=".ScooterApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -51,6 +57,12 @@
                 <data android:scheme="scooterre" android:host="login" />
             </intent-filter>
         </activity>
+
+        <!-- Shows the ongoing "connected" notification that keeps the process alive while a scooter is connected. -->
+        <service
+            android:name=".service.ConnectionService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
         <!-- Result of an app update installed through the "Download update" button. -->
         <receiver

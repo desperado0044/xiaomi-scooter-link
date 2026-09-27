@@ -77,6 +77,7 @@ data class UiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val orientationMode: OrientationMode = OrientationMode.AUTO,
     val keepScreenOn: Boolean = true,
+    val overlayEnabled: Boolean = false,
     val autoBrightness: Boolean = false,
     val units: UnitSystem = UnitSystem.METRIC,
     val autoConnect: Boolean = false,

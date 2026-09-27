@@ -106,6 +106,7 @@ fun ScooterApp(viewModel: ScooterViewModel = viewModel()) {
         onSetOrientationMode = viewModel::setOrientationMode,
         onSetAutoBrightness = viewModel::setAutoBrightness,
         onSetKeepScreenOn = viewModel::setKeepScreenOn,
+        onSetOverlay = viewModel::setOverlay,
         onSetUnits = viewModel::setUnits,
         onSetRefreshRate = viewModel::setRefreshRate,
         onSetAutoConnect = viewModel::setAutoConnect,
