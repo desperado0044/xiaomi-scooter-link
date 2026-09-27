@@ -644,6 +644,7 @@ private fun ModeCard(
                     propertyName = "RIDING_MODE",
                     lang = lang,
                     current = mode,
+                    cycleValues = profile.cycleValues,
                     onSelect = { onSetNumeric(propertiesByName.getValue("RIDING_MODE"), it) },
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                 )
@@ -666,12 +667,13 @@ private fun OverviewTileGrid(
     perRow: Int,
 ) {
     listOf(
-        // IS_RIDING ("Fahrzustand") and FAULT ("Fehler") used to be here too - dropped to keep
-        // the overview from being cut off at the bottom once the "Nach deinem Verbrauch" line is
-        // showing (confirmed on-device, 2026-09-22): both stay one tap away, on the Fahrt and
-        // Fahrzeug tabs, and neither is something you'd read while actually riding anyway.
-        "IS_LOCKED", "CURRENT_MILEAGE", "RIDING_TIME",
-        "AVERAGE_SPEED", "HIGHEST_SPEED", "BLUETOOTH_CAR_SEARCH",
+        // IS_RIDING ("Fahrzustand"), FAULT ("Fehler") and HIGHEST_SPEED ("Max. Tempo") used to be
+        // here too - dropped to keep the overview from being cut off at the bottom once the "Nach
+        // deinem Verbrauch" line is showing (confirmed on-device, 2026-09-22, and again 2026-09-27
+        // after adding LOCK_WARNING): all three stay one tap away, on the Fahrt and Fahrzeug tabs,
+        // and none is something you'd read while actually riding anyway.
+        "IS_LOCKED", "LOCK_WARNING", "CURRENT_MILEAGE", "RIDING_TIME",
+        "AVERAGE_SPEED", "BLUETOOTH_CAR_SEARCH",
     ).chunked(perRow).forEach { names ->
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             for (name in names) {
@@ -695,6 +697,7 @@ private fun overviewLabel(name: String, lang: Lang): String {
     return when (name) {
         "IS_RIDING" -> if (de) "Fahrzustand" else "State"
         "IS_LOCKED" -> if (de) "Gesperrt" else "Locked"
+        "LOCK_WARNING" -> if (de) "Alarm" else "Alarm"
         "CURRENT_MILEAGE" -> if (de) "Fahrstrecke" else "Trip"
         "RIDING_TIME" -> if (de) "Fahrzeit" else "Ride time"
         "AVERAGE_SPEED" -> if (de) "Ø Tempo" else "Avg speed"
@@ -755,7 +758,7 @@ private fun OverviewTile(
                 Button(onClick = { onSetBool(property, true) }, contentPadding = PaddingValues(horizontal = 12.dp)) {
                     Text(s.triggerButton)
                 }
-            } else if (property.name == "IS_LOCKED" && result?.ok == true && !profile.readOnly) {
+            } else if ((property.name == "IS_LOCKED" || property.name == "LOCK_WARNING") && result?.ok == true && !profile.readOnly) {
                 Switch(checked = (result.value as? Long) == 1L, onCheckedChange = { onSetBool(property, it) })
             }
         }
@@ -1341,6 +1344,7 @@ private fun PropertyRow(
                     propertyName = property.name,
                     lang = lang,
                     current = result.value as? Long,
+                    cycleValues = profile.cycleValues,
                     onSelect = { onSetNumeric(property, it) },
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                 )
@@ -1383,10 +1387,11 @@ private fun CycleButtons(
     propertyName: String,
     lang: Lang,
     current: Long?,
+    cycleValues: Map<String, List<Long>>,
     onSelect: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val options = CYCLE_VALUES[propertyName] ?: return
+    val options = cycleValues[propertyName] ?: return
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (value in options) {
             val label = cycleLabel(propertyName, value, lang)

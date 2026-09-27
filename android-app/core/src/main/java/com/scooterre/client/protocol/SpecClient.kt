@@ -77,6 +77,9 @@ data class SpecProfile(
     // renders them as a plain button instead of a value+switch row.
     val writeOnly: Set<String>,
     val cycleProperties: Set<String>,
+    // Defaults to empty: FamilyAProfiles' models are read-only (see ModelSupport.READ_ONLY), so
+    // they never reach a cycle-button UI and never needed this filled in.
+    val cycleValues: Map<String, List<Long>> = emptyMap(),
     val regionSensitiveProperties: Set<String>,
     val tabRide: List<String>,
     val tabBattery: List<String>,
@@ -131,8 +134,12 @@ private object SpecProperties {
         SpecProperty(3, 1, "BATTERY_STATUS", SpecType.UINT8),
         SpecProperty(3, 2, "BATTERY_TEMPERATURE", SpecType.INT8),
         SpecProperty(3, 3, "SCOOTER_TEMPERATURE", SpecType.INT8),
-        // Type unconfirmed, see REMAINING_MILEAGE_ALGORITHM above - same reasoning.
-        SpecProperty(3, 4, "LOCK_WARNING", SpecType.UINT8),
+        // Confirmed live 2026-09-27 (SET probe with the phone connected, scooter locked): a
+        // motion-triggered theft alarm, not just a status signal - setting it while locked arms
+        // it, and it went off immediately when the wheels were turned. Declared BOOL (arm/disarm),
+        // not the originally-assumed unconfirmed UINT8 - both encode identically as one byte, so
+        // this doesn't change the wire format, only how the app now interprets and shows it.
+        SpecProperty(3, 4, "LOCK_WARNING", SpecType.BOOL),
         SpecProperty(3, 5, "MILEAGE_UNIT", SpecType.UINT8),
         // Packed decimal string "[state 1][interval 3][remaining-days 3]" - see
         // ui/DashboardScreen.kt's formatTireMaintenance for the decode. Writes use the shorter
@@ -195,6 +202,8 @@ private object SpecProperties {
         "INTELLIGENT_DOWNHILL", "HILL_PARKING", "BLUETOOTH_SEARCH_ON",
         "RIDING_MODE", "CRUISE_IS_ON", "MILEAGE_UNIT", "ATMOSPHERE_LIGHT",
         "BLUETOOTH_CAR_SEARCH", "TIRE_MAINTENANCE",
+        // Theft alarm arm/disarm - see its declaration above for how this was confirmed.
+        "LOCK_WARNING",
     )
 
     /** See [SpecProfile.writeOnly]'s doc comment - properties here must never receive a GET. */
@@ -206,6 +215,19 @@ private object SpecProperties {
      * The values themselves (language-independent) live here; their display labels are bilingual
      * and live in ui/Strings.kt ([com.scooterre.client.ui.cycleLabel]). */
     val CYCLE_PROPERTIES = setOf("RIDING_MODE", "ENERGY_RECOVERY", "MILEAGE_UNIT", "ATMOSPHERE_LIGHT")
+
+    /** Ordered raw values for [CYCLE_PROPERTIES] - the single source of truth for the legal value
+     * set (confirmed against the plugin's own setProperty calls, not guessed), shared by both the
+     * phone (:app's ui/Strings.kt used to keep its own copy of this - removed to avoid the two
+     * drifting apart) and the watch. Display labels stay bilingual/UI-only and are NOT duplicated
+     * here - see [com.scooterre.client.ui.cycleLabel] on the phone, and the watch's own
+     * German-only label maps in VehicleSettingsScreen.kt. */
+    val CYCLE_VALUES: Map<String, List<Long>> = mapOf(
+        "RIDING_MODE" to listOf(11L, 2L, 3L),
+        "ENERGY_RECOVERY" to listOf(30L, 60L, 90L),
+        "ATMOSPHERE_LIGHT" to listOf(0L, 1L, 2L),
+        "MILEAGE_UNIT" to listOf(1L, 0L),
+    )
 
     /** Settable properties with a legal/safety catch that varies by country or situation - this
      * app can't know which jurisdiction an install is in or how it's being used, so instead of
@@ -283,6 +305,7 @@ object SpecProfiles {
         settable = SpecProperties.SETTABLE,
         writeOnly = SpecProperties.WRITE_ONLY,
         cycleProperties = SpecProperties.CYCLE_PROPERTIES,
+        cycleValues = SpecProperties.CYCLE_VALUES,
         regionSensitiveProperties = SpecProperties.REGION_SENSITIVE_PROPERTIES,
         tabRide = SpecProperties.TAB_RIDE,
         tabBattery = SpecProperties.TAB_BATTERY,

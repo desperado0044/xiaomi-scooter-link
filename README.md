@@ -266,12 +266,39 @@ Layer API.
   to it directly over its own Bluetooth, independent of the phone. This never happens on its own -
   only on that explicit tap - so it never competes with the phone for the scooter's one BLE slot
   unless you deliberately connect both at once. Shows battery, remaining range and lock state, and
-  offers lock/unlock and horn/find-my (where the model supports it). Locking is blocked below 40%
-  watch battery, so a nearly-dead watch can never lock the scooter with the phone out of reach to
-  undo it.
+  offers lock/unlock, the theft alarm (Alarm) and horn/find-my (where the model supports it).
+  Locking is blocked below 40% watch battery, so a nearly-dead watch can never lock the scooter
+  with the phone out of reach to undo it.
+- **Vehicle settings**: every relevant BOOL/cycle setting the model supports (lights, energy
+  recovery, cruise control, ...), reachable from the device screen. Region-sensitive ones (cruise
+  control, tail light) ask for confirmation before turning on, same as the phone.
+- **In-app updater**: once installed, "Check for update" on the watch works the same way it does
+  on the phone - no adb needed for updates after the first install.
 
-Not built yet: a vehicle-settings screen (ride mode, lights, etc.), documents, and an in-app
-updater for the watch app itself - all planned, none of them present in this version.
+Not built yet: documents on the watch - planned, not present in this version.
+
+### Installing the watch app
+
+The watch app isn't on the Play Store and can't be installed from the phone - it's sideloaded via
+`adb` once, over Wi-Fi (Wear OS watches have no data-capable USB port):
+
+1. On the watch: **Settings → System → About → tap the build number** several times to unlock
+   Developer options.
+2. **Settings → Developer options** → enable **"ADB debugging"** and **"Wireless debugging"**.
+3. Open **"Wireless debugging"** - it shows an IP:port and, under "Pair new device", a pairing
+   code (both change if the screen times out or debugging gets toggled off).
+4. On your PC:
+   ```
+   adb pair <ip:port> <pairing code>
+   adb connect <ip:port>
+   adb -s <ip:port> install -r scooter-link-wear-X.X.apk
+   ```
+5. On the phone, in Scooter Link: App settings → **"Connect to watch"** to push the saved
+   scooters' keys and settings over.
+
+Pairing is normally a one-time step - as long as "Wireless debugging" stays on, later reconnects
+only need `adb connect`, and after this first install the watch's own in-app updater handles new
+versions without adb at all.
 
 ## Getting started
 

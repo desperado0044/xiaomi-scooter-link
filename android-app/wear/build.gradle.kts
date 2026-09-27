@@ -24,8 +24,8 @@ android {
         applicationId = "com.scooterre.client"
         minSdk = 30 // Wear OS 3+ (Compose Material 3 for Wear requires this baseline)
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2"
+        versionCode = 3
+        versionName = "0.3"
     }
 
     // Same release key as the phone app - see the comment above for why this must match.
@@ -87,6 +87,7 @@ dependencies {
     // betas (1.7.x) need compileSdk 37 + AGP 9.1, which the rest of this project isn't on yet.
     implementation("androidx.wear.compose:compose-material3:1.5.0")
     implementation("androidx.wear.compose:compose-foundation:1.5.0")
+    implementation("androidx.wear.compose:compose-navigation:1.5.0")
     implementation("androidx.wear:wear-tooling-preview:1.0.0")
 
     // Data Layer API (phone <-> watch sync) and Tiles (glanceable watch-face-adjacent status).

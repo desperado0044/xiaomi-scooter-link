@@ -280,12 +280,40 @@ an eine gekoppelte Uhr, über die Wear-Data-Layer-API.
   direkt über ihr eigenes Bluetooth verbinden, unabhängig vom Handy. Das passiert nie von selbst –
   nur durch diesen bewussten Tap –, sodass sie dem Handy nie den einen Bluetooth-Platz des Scooters
   streitig macht, außer man verbindet absichtlich beide gleichzeitig. Zeigt Akku, Restreichweite und
-  Sperrzustand, bietet Ent-/Verriegeln und Hupe/Suchen (falls vom Modell unterstützt). Sperren ist
-  unter 40 % Uhr-Akku blockiert, damit eine fast leere Uhr den Scooter nie sperren kann, ohne dass
-  das Handy in der Nähe wäre, um das rückgängig zu machen.
+  Sperrzustand, bietet Ent-/Verriegeln, den Diebstahlalarm (Alarm) und Hupe/Suchen (falls vom Modell
+  unterstützt). Sperren ist unter 40 % Uhr-Akku blockiert, damit eine fast leere Uhr den Scooter nie
+  sperren kann, ohne dass das Handy in der Nähe wäre, um das rückgängig zu machen.
+- **Fahrzeug-Einstellungen**: jede relevante BOOL-/Zyklus-Einstellung des Modells (Licht,
+  Rekuperation, Tempomat, ...), erreichbar über den Geräte-Bildschirm. Rechtlich sensible
+  Einstellungen (Tempomat, Rücklicht) fragen vor dem Einschalten nach Bestätigung, genau wie am Handy.
+- **In-App-Updater**: einmal installiert, funktioniert „Nach Update suchen" auf der Uhr genauso wie
+  am Handy – nach der Erstinstallation ist kein adb mehr für Updates nötig.
 
-Noch nicht gebaut: eine Fahrzeug-Einstellungsseite (Fahrmodus, Beleuchtung, etc.), Dokumente, und ein
-Auto-Update-Mechanismus für die Uhr-App selbst – alles geplant, aber in dieser Version noch nicht enthalten.
+Noch nicht gebaut: Dokumente auf der Uhr – geplant, in dieser Version noch nicht enthalten.
+
+### Installation auf der Uhr
+
+Die Uhr-App ist nicht im Play Store und lässt sich nicht vom Handy aus installieren – sie wird
+einmalig per `adb` über WLAN aufgespielt (Wear-OS-Uhren haben keinen datenfähigen USB-Anschluss):
+
+1. Auf der Uhr: **Einstellungen → System → Über → mehrmals auf die Build-Nummer tippen**, bis die
+   Entwickleroptionen freigeschaltet sind.
+2. **Einstellungen → Entwickleroptionen** → „ADB-Debugging" und „Debugging über WLAN" aktivieren.
+3. „Debugging über WLAN" öffnen – zeigt eine IP:Port-Adresse und unter „Neues Gerät koppeln" einen
+   Pairing-Code (beides ändert sich, wenn der Bildschirm-Timeout greift oder das Debugging aus- und
+   wieder eingeschaltet wird).
+4. Am PC:
+   ```
+   adb pair <ip:port> <pairing-code>
+   adb connect <ip:port>
+   adb -s <ip:port> install -r scooter-link-wear-X.X.apk
+   ```
+5. Am Handy in Scooter Link: App-Einstellungen → **„Mit Uhr verbinden"**, um die Schlüssel der
+   gespeicherten Scooter und Einstellungen zu übertragen.
+
+Das Pairing ist normalerweise einmalig – solange „Debugging über WLAN" an bleibt, reicht danach
+`adb connect`. Nach dieser Erstinstallation übernimmt der In-App-Updater der Uhr künftige Versionen
+ganz ohne adb.
 
 ## Erste Schritte
 

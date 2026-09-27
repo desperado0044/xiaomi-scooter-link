@@ -30,4 +30,10 @@ object WatchState {
     /** Every scooter the phone has pushed a key for - can be more than one (see DeviceRegistry). */
     val devices = MutableStateFlow<List<KnownDevice>>(emptyList())
     val settings = MutableStateFlow(WatchSettings())
+
+    /** Set by the daily automatic check (see WearUpdate) - a version string if it found one newer
+     * than what's installed, null otherwise. Downloading/installing stays a separate, explicit step
+     * ("Update suchen" on the App screen), exactly like the phone's own daily-check-then-manual-
+     * download split. */
+    val availableUpdateVersion = MutableStateFlow<String?>(null)
 }

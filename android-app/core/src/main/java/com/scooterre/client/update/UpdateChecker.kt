@@ -54,15 +54,27 @@ object UpdateChecker {
         }
     }
 
+    /** scooter-link-wear-0.2.apk -> "0.2" - the watch's own APK is always named with its own
+     * version this way (see the release step), which is what makes a cheap, JSON-only check
+     * possible for it at all: unlike the phone, its version has nothing to do with the release
+     * tag, and reading the real thing means downloading and opening the APK (see
+     * UpdateInstaller.apkVersionName) - too expensive to do on every automatic check. */
+    private val WEAR_ASSET_VERSION = Regex("""-(\d+(?:\.\d+)+)\.apk$""", RegexOption.IGNORE_CASE)
+
     /** Reads a GitHub release JSON. The APK asset is only taken if it really lives under
      * [DOWNLOAD_PREFIX] and matches [kind] - a release can carry both the phone and the watch APK
      * (they share an applicationId and signing certificate, see [AssetKind]'s doc comment), so the
-     * "wear" name marker is the only thing telling them apart here. */
+     * "wear" name marker is the only thing telling them apart here. [UpdateInfo.version] is the
+     * release tag for [AssetKind.PHONE] (by convention, always equal to the phone's own
+     * versionName) but the watch APK's own filename-embedded version for [AssetKind.WATCH] - falls
+     * back to the tag if the name doesn't parse, which just means a future automatic check might
+     * miss a release, never that it offers a wrong one (the download-time check is still final). */
     fun parseRelease(body: String, kind: AssetKind): UpdateInfo? {
         return try {
             val json = JSONObject(body)
             var apkUrl: String? = null
             var apkSha: String? = null
+            var assetVersion: String? = null
             val assets = json.optJSONArray("assets")
             if (assets != null) {
                 for (i in 0 until assets.length()) {
@@ -74,11 +86,14 @@ object UpdateChecker {
                     if (name.endsWith(".apk", ignoreCase = true) && matchesKind && url.startsWith(DOWNLOAD_PREFIX)) {
                         apkUrl = url
                         apkSha = normalizeDigest(asset.optString("digest"))
+                        assetVersion = WEAR_ASSET_VERSION.find(name)?.groupValues?.get(1)
                         break
                     }
                 }
             }
-            UpdateInfo(json.getString("tag_name").removePrefix("v"), json.getString("html_url"), apkUrl, apkSha)
+            val tag = json.getString("tag_name").removePrefix("v")
+            val version = if (kind == AssetKind.WATCH) assetVersion ?: tag else tag
+            UpdateInfo(version, json.getString("html_url"), apkUrl, apkSha)
         } catch (e: Exception) {
             null
         }

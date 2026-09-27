@@ -812,7 +812,7 @@ private val PROPERTY_NAMES_DE: Map<String, String> = mapOf(
     "BMS_FIRMWARE_VERSION" to "BMS-Firmware-Version", "SCOOTER_SN" to "Scooter-Seriennummer",
     "FIRMWARE_VERSION" to "Firmware-Version",
     "REMAINING_MILEAGE_ALGORITHM" to "Reichweiten-Algorithmus", "FAKE_SHUTDOWN_STATUS" to "Ruhezustand",
-    "LOCK_WARNING" to "Schloss-Warnsignal", "TIRE_MAINTENANCE" to "Reifen-Wartungserinnerung",
+    "LOCK_WARNING" to "Diebstahlalarm", "TIRE_MAINTENANCE" to "Reifen-Wartungserinnerung",
     "MORE_BATTERY_INFO" to "Akku-Detailwerte", "MORE_BATTERY_INFO_2" to "Akku-Extremwerte",
     "BLUETOOTH_CAR_SEARCH" to "Scooter-Suche (Signal)",
     "LOG_1" to "Fahrtenbuch 1", "LOG_2" to "Fahrtenbuch 2", "LOG_3" to "Fahrtenbuch 3",
@@ -837,7 +837,7 @@ private val PROPERTY_NAMES_EN: Map<String, String> = mapOf(
     "BMS_FIRMWARE_VERSION" to "BMS Firmware Version", "SCOOTER_SN" to "Scooter Serial Number",
     "FIRMWARE_VERSION" to "Firmware Version",
     "REMAINING_MILEAGE_ALGORITHM" to "Range Algorithm", "FAKE_SHUTDOWN_STATUS" to "Sleep State",
-    "LOCK_WARNING" to "Lock Warning Signal", "TIRE_MAINTENANCE" to "Tire Maintenance Reminder",
+    "LOCK_WARNING" to "Theft Alarm", "TIRE_MAINTENANCE" to "Tire Maintenance Reminder",
     "MORE_BATTERY_INFO" to "Battery Detail Values", "MORE_BATTERY_INFO_2" to "Battery Extreme Values",
     "BLUETOOTH_CAR_SEARCH" to "Scooter Finder (Signal)",
     "LOG_1" to "Ride Log 1", "LOG_2" to "Ride Log 2", "LOG_3" to "Ride Log 3",
@@ -916,15 +916,9 @@ fun enumLabel(propertyName: String, value: Long, lang: Lang): String? =
 fun hasEnumLabels(propertyName: String): Boolean =
     propertyName == "RIDING_MODE" || ENUM_LABELS_DE.containsKey(propertyName)
 
-/** Ordered raw values for cycle-button properties (paired with [enumLabel]/[cycleLabel] for the
- * button text) - the actual allowed value set, confirmed against the plugin's own setProperty
- * calls, is defined once here rather than per-language. */
-val CYCLE_VALUES: Map<String, List<Long>> = mapOf(
-    "RIDING_MODE" to listOf(11L, 2L, 3L),
-    "ENERGY_RECOVERY" to listOf(30L, 60L, 90L),
-    "ATMOSPHERE_LIGHT" to listOf(0L, 1L, 2L),
-    "MILEAGE_UNIT" to listOf(1L, 0L),
-)
+// The ordered raw value set per cycle property used to live here too - moved to :core's
+// SpecProperties.CYCLE_VALUES (exposed per-model as SpecProfile.cycleValues) so the watch app can
+// share the exact same values instead of a second, driftable copy. Use profile.cycleValues here.
 
 fun cycleLabel(propertyName: String, value: Long, lang: Lang): String =
     enumLabel(propertyName, value, lang) ?: value.toString()

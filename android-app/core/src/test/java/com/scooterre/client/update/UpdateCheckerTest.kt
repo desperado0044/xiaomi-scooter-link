@@ -53,6 +53,19 @@ class UpdateCheckerTest {
     }
 
     @Test
+    fun theWatchVersionComesFromTheAssetNameNotTheReleaseTag() {
+        // The release tag is one shared number for everything a release carries (here "2.3" -
+        // the phone's own version). The watch has its own, independently-numbered version, which
+        // only its APK's filename can say without downloading and opening the file.
+        val wearUrl = UpdateChecker.DOWNLOAD_PREFIX + "v2.3/scooter-link-wear-0.7.apk"
+        val info = UpdateChecker.parseRelease(
+            release("""{"name":"scooter-link-wear-0.7.apk","browser_download_url":"$wearUrl"}"""),
+            AssetKind.WATCH,
+        )!!
+        assertEquals("0.7", info.version)
+    }
+
+    @Test
     fun aReleaseWithoutApkOrDigestStillParses() {
         assertNull(UpdateChecker.parseRelease(release(""), AssetKind.PHONE)!!.apkUrl)
         val noDigest = UpdateChecker.parseRelease(release("""{"name":"a.apk","browser_download_url":"$apkUrl"}"""), AssetKind.PHONE)!!

@@ -121,6 +121,15 @@ object UpdateInstaller {
     private val signatureFlags: Int
         get() = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else @Suppress("DEPRECATION") PackageManager.GET_SIGNATURES
 
+    /** The `versionName` embedded in a downloaded APK, straight from its own manifest - null if the
+     * file cannot be parsed as an APK at all. A GitHub release's tag is one shared number for
+     * everything it carries (e.g. the phone release tag and the Wear OS companion's own,
+     * independently-numbered version can both be attached to the same release) - comparing THIS,
+     * not the tag, is what tells each app whether the specific file it downloaded is actually
+     * newer than what it has installed. */
+    fun apkVersionName(context: Context, file: File): String? =
+        context.packageManager.getPackageArchiveInfo(file.absolutePath, 0)?.versionName
+
     /** Null if the file may be installed, otherwise what is wrong with it. */
     fun verify(context: Context, file: File, expectedSha256: String?): UpdateProblem? {
         if (expectedSha256 != null && !sha256Hex(file).equals(expectedSha256, ignoreCase = true)) return UpdateProblem.HASH
