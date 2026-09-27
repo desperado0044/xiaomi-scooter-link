@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "ScooterClient"
 include(":app")
+include(":core")
+include(":wear")

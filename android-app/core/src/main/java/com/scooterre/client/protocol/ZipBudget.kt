@@ -5,9 +5,9 @@ import java.io.IOException
 import java.util.zip.ZipInputStream
 
 /** Caps how much a bundle may expand while it is unpacked, so a crafted small file cannot exhaust the memory. */
-internal class ZipBudget(var left: Long = 150L * 1024 * 1024)
+class ZipBudget(var left: Long = 150L * 1024 * 1024)
 
-internal fun ZipInputStream.readBytesWithin(budget: ZipBudget): ByteArray {
+fun ZipInputStream.readBytesWithin(budget: ZipBudget): ByteArray {
     val out = ByteArrayOutputStream()
     val buf = ByteArray(64 * 1024)
     while (true) {
