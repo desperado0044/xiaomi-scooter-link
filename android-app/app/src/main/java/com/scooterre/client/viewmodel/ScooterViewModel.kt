@@ -51,6 +51,7 @@ import com.scooterre.client.reminder.InsuranceReminders
 import com.scooterre.client.service.ConnectionService
 import com.scooterre.client.service.OverlayBus
 import com.scooterre.client.service.OverlayData
+import com.scooterre.client.service.WearBridge
 import com.scooterre.client.reminder.InsuranceSchedule
 import com.scooterre.client.ui.Lang
 import com.scooterre.client.ui.resolveLang
@@ -391,6 +392,34 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun dismissExportCode() = _state.update { it.copy(exportCode = null, exportMac = null) }
+
+    /** "Mit Uhr verbinden": pushes every saved scooter's key/MAC/name (not just one - the watch
+     * should work standalone for any of them, same as the phone) plus the small set of app-level
+     * settings the watch also offers standalone, over the Data Layer, to whatever Wear OS
+     * companion is currently paired. Same key data as [exportDevice] per device, just sent to the
+     * watch instead of encoded into a text blob. Also called automatically after a device is
+     * added/renamed, so a later addition doesn't need a manual re-push to reach the watch -
+     * removals ("Vergessen") are NOT mirrored to the watch yet, that needs its own message type. */
+    fun syncAllDevicesToWatch(onResult: (Boolean) -> Unit = {}) {
+        val devices = deviceRegistry.list().mapNotNull { device ->
+            secureStore.loadLtmk(device.mac)?.let { device to it }
+        }
+        if (devices.isEmpty()) {
+            onResult(false)
+            return
+        }
+        var remaining = devices.size
+        var allOk = true
+        devices.forEach { (device, ltmk) ->
+            WearBridge.pushDevice(getApplication(), device.mac, device.model, device.name, ltmk) { ok ->
+                if (!ok) allOk = false
+                remaining--
+                if (remaining == 0) onResult(allOk)
+            }
+        }
+        val v = _state.value
+        WearBridge.pushSettings(getApplication(), v.units, v.language, v.confirmCritical, v.rideTracking)
+    }
 
     fun onImportTextChanged(text: String) = _state.update { it.copy(importText = text) }
 

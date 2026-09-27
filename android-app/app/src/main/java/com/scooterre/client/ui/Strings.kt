@@ -1067,3 +1067,22 @@ fun overlayHint(lang: Lang) = if (lang == Lang.DE) {
 } else {
     "A small window you can drag, over other apps (e.g. navigation), with the remaining range and the trip distance while the scooter is connected and the app is not on screen. Needs the \"display over other apps\" permission."
 }
+
+/** "Mit Uhr verbinden" section (kept out of [AppStrings], see [connectedChannelName]). */
+fun wearSectionLabel(lang: Lang) = if (lang == Lang.DE) "Wear OS" else "Wear OS"
+
+fun wearPushLabel(lang: Lang) = if (lang == Lang.DE) "Mit Uhr verbinden" else "Connect to watch"
+
+fun wearPushHint(lang: Lang) = if (lang == Lang.DE) {
+    "Über \"Mit Uhr verbinden\" bei einem Scooter in der Geräteliste lässt sich dessen Schlüssel einmalig an eine gekoppelte Wear-OS-Uhr übertragen, damit sie auch ohne Handy in der Nähe funktioniert - inklusive dieser Einstellungen."
+} else {
+    "\"Connect to watch\" on a scooter in the device list sends that scooter's key once to a paired Wear OS watch, so it also works with the phone out of reach - these settings included."
+}
+
+fun wearPushSuccess(lang: Lang) = if (lang == Lang.DE) "An die Uhr übertragen" else "Sent to the watch"
+
+fun wearPushFailure(lang: Lang) = if (lang == Lang.DE) {
+    "Fehlgeschlagen - ist eine Uhr gekoppelt und in Reichweite?"
+} else {
+    "Failed - is a watch paired and in range?"
+}

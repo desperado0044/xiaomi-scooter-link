@@ -85,4 +85,6 @@ dependencies {
     // Home-screen widget - Glance instead of classic RemoteViews/XML since it lets the widget UI
     // be written in the same Compose-like style as the rest of the app.
     implementation("androidx.glance:glance-appwidget:1.1.1")
+    // Data Layer sync to the optional Wear OS companion (:wear) - status relay and settings/key push.
+    implementation("com.google.android.gms:play-services-wearable:20.0.1")
 }

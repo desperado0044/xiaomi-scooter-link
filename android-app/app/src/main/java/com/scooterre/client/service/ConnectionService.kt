@@ -27,16 +27,19 @@ import com.scooterre.client.MainActivity
 class ConnectionService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var overlay: OverlayController? = null
+    private var wearSync: WearSync? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         overlay = OverlayController(this, scope).also { it.start() }
+        wearSync = WearSync(this, scope).also { it.start() }
     }
 
     override fun onDestroy() {
         overlay?.stop()
+        wearSync?.stop()
         scope.cancel()
         super.onDestroy()
     }

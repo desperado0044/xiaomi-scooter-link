@@ -117,6 +117,7 @@ fun ScooterApp(viewModel: ScooterViewModel = viewModel()) {
         onBackupCreated = viewModel::markBackupDone,
         onDismissBackupMessage = viewModel::dismissBackupMessage,
         onExplore = viewModel::exploreValues,
+        onSyncAllToWatch = viewModel::syncAllDevicesToWatch,
         onSetInsuranceReminder = { enable ->
             if (!enable) {
                 viewModel.setInsuranceReminder(false)

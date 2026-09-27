@@ -6,6 +6,7 @@ import android.net.Uri
 import com.scooterre.client.protocol.*
 import com.scooterre.client.reminder.InsuranceReminders
 import com.scooterre.client.reminder.InsuranceSchedule
+import com.scooterre.client.service.WearBridge
 import com.scooterre.client.ui.*
 import com.scooterre.client.update.*
 import kotlinx.coroutines.Dispatchers
@@ -42,12 +43,14 @@ internal class SettingsController(
     fun setLanguage(lang: Lang) {
         prefs.edit().putString(KEY_LANG, lang.name).apply()
         _state.update { it.copy(language = lang) }
+        pushSettingsToWatch()
     }
 
     fun setUnits(units: UnitSystem) {
         prefs.edit().putString(KEY_UNITS, units.name).apply()
         _state.update { it.copy(units = units) }
         onUnitsChanged()
+        pushSettingsToWatch()
     }
 
     fun setRefreshRate(rate: RefreshRate) {
@@ -63,11 +66,13 @@ internal class SettingsController(
     fun setConfirmCritical(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_CONFIRM_CRITICAL, enabled).apply()
         _state.update { it.copy(confirmCritical = enabled) }
+        pushSettingsToWatch()
     }
 
     fun setRideTracking(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_RIDE_TRACKING, enabled).apply()
         _state.update { it.copy(rideTracking = enabled) }
+        pushSettingsToWatch()
     }
 
     fun setKeepScreenOn(enabled: Boolean) {
@@ -84,6 +89,14 @@ internal class SettingsController(
         val next = if (_state.value.language == Lang.DE) Lang.EN else Lang.DE
         prefs.edit().putString(KEY_LANG, next.name).apply()
         _state.update { it.copy(language = next) }
+        pushSettingsToWatch()
+    }
+
+    /** Mirrors the small set of settings the watch also offers standalone - fire-and-forget,
+     * a no-op when there is no paired watch (see [WearBridge]). */
+    private fun pushSettingsToWatch() {
+        val v = _state.value
+        WearBridge.pushSettings(app, v.units, v.language, v.confirmCritical, v.rideTracking)
     }
 
     fun setAppLock(enabled: Boolean) {

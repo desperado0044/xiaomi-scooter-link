@@ -95,6 +95,7 @@ data class SettingsActions(
     val onBackupCreated: () -> Unit,
     val onDismissBackupMessage: () -> Unit,
     val onExplore: () -> Unit,
+    val onSyncAllToWatch: (onResult: (Boolean) -> Unit) -> Unit,
 )
 
 @Composable
@@ -225,6 +226,19 @@ fun AppSettingsContent(state: UiState, s: AppStrings, settings: SettingsActions,
             androidx.compose.material3.TextButton(onClick = settings.onTestInsuranceNotification) { Text(s.insuranceTestButton) }
         }
         BackupCard(state, s, settings)
+        SettingsCard {
+            Text(wearSectionLabel(state.language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+            Text(wearPushHint(state.language), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            var wearResult by remember { mutableStateOf<Boolean?>(null) }
+            TextButton(onClick = { settings.onSyncAllToWatch { ok -> wearResult = ok } }) { Text(wearPushLabel(state.language)) }
+            wearResult?.let { ok ->
+                Text(
+                    if (ok) wearPushSuccess(state.language) else wearPushFailure(state.language),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         SettingsCard {
             Text(s.aboutLabel, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
             Text(s.aboutVersion(versionName), style = MaterialTheme.typography.bodyMedium)

@@ -1,22 +1,56 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// Wear OS companion: standalone app for the watch, own applicationId (sideloaded directly,
-// not distributed via Play Store's automatic phone/watch pairing). Shares the BLE/crypto/
-// protocol code with the phone app via :core - no protocol logic is duplicated here.
+// Wear OS companion: sideloaded directly onto the watch, not distributed via Play Store's
+// automatic phone/watch embedding. Shares the BLE/crypto/protocol code with the phone app via
+// :core - no protocol logic is duplicated here.
+//
+// applicationId is DELIBERATELY THE SAME as the phone app's (com.scooterre.client), and the
+// release build is signed with the same key - the Wearable Data Layer (MessageClient/DataClient)
+// identifies a phone/watch app pair by matching applicationId + signing certificate, and silently
+// fails to deliver ("Failed to deliver message to AppKey...") if either differs. This is the
+// deliberate exception to "namespace matches applicationId": the Kotlin package/namespace stays
+// .wear for code organization, only the applicationId is shared.
 android {
     namespace = "com.scooterre.client.wear"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.scooterre.client.wear"
+        applicationId = "com.scooterre.client"
         minSdk = 30 // Wear OS 3+ (Compose Material 3 for Wear requires this baseline)
         targetSdk = 35
         versionCode = 1
         versionName = "0.1"
+    }
+
+    // Same release key as the phone app - see the comment above for why this must match.
+    val signingProps = Properties().apply {
+        val f = File(System.getProperty("user.home"), ".scooter-signing/keystore.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+    val hasReleaseKey = signingProps.getProperty("storeFile")?.let { File(it).exists() } == true
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = File(signingProps.getProperty("storeFile"))
+                storePassword = signingProps.getProperty("storePassword")
+                keyAlias = signingProps.getProperty("keyAlias")
+                keyPassword = signingProps.getProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     compileOptions {
