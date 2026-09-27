@@ -24,8 +24,8 @@ android {
         applicationId = "com.scooterre.client"
         minSdk = 30 // Wear OS 3+ (Compose Material 3 for Wear requires this baseline)
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2"
     }
 
     // Same release key as the phone app - see the comment above for why this must match.
@@ -72,6 +72,9 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.2")
+    // registerForActivityResult requires Fragment 1.3.0+; nothing else here pulls in a recent
+    // enough transitive version (lint: InvalidFragmentVersionForActivityResult).
+    implementation("androidx.fragment:fragment-ktx:1.8.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
