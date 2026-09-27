@@ -293,13 +293,9 @@ Noch nicht gebaut: Dokumente auf der Uhr – geplant, in dieser Version noch nic
 
 ### Installation auf der Uhr
 
-Die Uhr-App ist nicht im Play Store und lässt sich nicht vom Handy aus installieren – sie wird
-einmalig per `adb` aufgespielt. „Debugging" ist bei Android schlicht der einzige offizielle Kanal für
-eine APK von außerhalb des Play Store (am Handy übernimmt das sonst Browser + Dateimanager +
-Installer, was Wear OS nicht hat) – es wird dabei nichts an der App „debuggt".
+Die Uhr-App ist nicht im Play Store und lässt sich nicht vom Handy aus installieren. Drei Wege:
 
-**Per USB (einfacher, falls die Uhr das unterstützt – bei der Pixel Watch 2 z.B. über ihren
-Lade-Puck, der USB-Datenübertragung kann; laut Nutzerberichten, offiziell nicht groß beworben):**
+**Per USB (Pixel Watch 2: über den Lade-Puck, der USB-Datenübertragung unterstützt):**
 
 1. Auf der Uhr: **Einstellungen → System → Über → mehrmals auf die Build-Nummer tippen**, bis die
    Entwickleroptionen freigeschaltet sind.
@@ -326,18 +322,17 @@ Lade-Puck, der USB-Datenübertragung kann; laut Nutzerberichten, offiziell nicht
    Das Pairing ist normalerweise einmalig – solange „Debugging über WLAN" an bleibt, reicht danach
    `adb connect` ohne erneuten Code.
 
-**Ohne PC/adb (z.B. für eine andere Person, deren Uhr man nicht vor sich hat):**
+**Ohne PC/adb:**
 
-1. Die betreffende Person installiert **„WearLoad"** oder **„AnExplorer"** aus dem normalen Play
-   Store – direkt auf der Uhr, das sind offiziell gelistete Apps, kein Entwickler-/ADB-Modus nötig.
-2. Die `scooter-link-wear-X.X.apk` muss auf ihr **Handy** kommen (z.B. per Link, Mail oder
+1. „WearLoad" oder „AnExplorer" aus dem Play Store direkt auf der Uhr installieren – offiziell
+   gelistete Apps, kein Entwickler-/ADB-Modus nötig.
+2. `scooter-link-wear-X.X.apk` auf das mit der Uhr verbundene Handy übertragen (Link, Mail,
    Cloud-Freigabe).
 3. Die installierte App auf der Uhr öffnen – sie zeigt einen QR-Code bzw. einen lokalen
-   WLAN-Empfänger; Handy und Uhr müssen im selben WLAN sein. Vom Handy aus die APK an die Uhr
-   schicken, die Uhr installiert sie direkt.
+   WLAN-Empfänger; Handy und Uhr im selben WLAN. APK vom Handy an die Uhr senden, die Uhr
+   installiert sie direkt.
 
-(Die genauen Tippschritte innerhalb von WearLoad/AnExplorer sind nicht im Detail geprüft – bei
-Bedarf beim tatsächlichen Durchgehen klären.)
+(Die genauen Bedienschritte in WearLoad/AnExplorer selbst sind nicht verifiziert.)
 
 **Danach** (alle drei Wege): Am Handy in Scooter Link: App-Einstellungen → **„Mit Uhr verbinden"**,
 um die Schlüssel der gespeicherten Scooter und Einstellungen zu übertragen. Nach dieser
