@@ -24,8 +24,8 @@ android {
         applicationId = "com.scooterre.client"
         minSdk = 30 // Wear OS 3+ (Compose Material 3 for Wear requires this baseline)
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "1.0"
     }
 
     // Same release key as the phone app - see the comment above for why this must match.
@@ -82,6 +82,10 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.09.03"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    // HorizontalPager + pinch/double-tap zoom for the documents viewer (same primitives :app's
+    // DocumentViewer.kt uses) - not otherwise guaranteed to be pulled in transitively, so declared
+    // explicitly (version resolved by the BOM above, same as the other compose.ui lines).
+    implementation("androidx.compose.foundation:foundation")
 
     // Wear-specific Compose (Material 3 Expressive). 1.5.0 is the latest stable line; newer
     // betas (1.7.x) need compileSdk 37 + AGP 9.1, which the rest of this project isn't on yet.

@@ -10,7 +10,7 @@ import com.scooterre.client.protocol.KnownDevice
 import com.scooterre.client.protocol.SecureStore
 import org.json.JSONObject
 
-/** Paths the phone's WearSync/WearBridge push to - must match the phone app. */
+/** Paths the phone's WearSync/WearBridge/WearDocsBridge push to - must match the phone app. */
 private const val STATUS_PATH = "/scooterre/status"
 private const val DEVICE_PATH = "/scooterre/device"
 private const val SETTINGS_PATH = "/scooterre/settings"
@@ -24,16 +24,24 @@ class StatusListenerService : WearableListenerService() {
         try {
             for (event in dataEvents) {
                 if (event.type != DataEvent.TYPE_CHANGED) continue
-                if (event.dataItem.uri.path != STATUS_PATH) continue
-                val map = DataMapItem.fromDataItem(event.dataItem).dataMap
-                WatchState.status.value = RelayStatus(
-                    rest = map.getString("rest") ?: "",
-                    trip = map.getString("trip") ?: "",
-                    battery = map.getString("battery") ?: "",
-                    rideTime = map.getString("rideTime") ?: "",
-                    standby = map.getBoolean("standby"),
-                    updatedAt = map.getLong("updatedAt"),
-                )
+                val path = event.dataItem.uri.path ?: continue
+                when {
+                    path == STATUS_PATH -> {
+                        val map = DataMapItem.fromDataItem(event.dataItem).dataMap
+                        WatchState.status.value = RelayStatus(
+                            rest = map.getString("rest") ?: "",
+                            trip = map.getString("trip") ?: "",
+                            battery = map.getString("battery") ?: "",
+                            rideTime = map.getString("rideTime") ?: "",
+                            standby = map.getBoolean("standby"),
+                            updatedAt = map.getLong("updatedAt"),
+                        )
+                    }
+                    path.startsWith(DOCS_PATH_PREFIX) -> {
+                        val mac = path.removePrefix(DOCS_PATH_PREFIX)
+                        applyDocumentsPush(this, mac, DataMapItem.fromDataItem(event.dataItem).dataMap)
+                    }
+                }
             }
         } finally {
             dataEvents.release()

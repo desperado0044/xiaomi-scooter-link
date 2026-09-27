@@ -52,6 +52,7 @@ import com.scooterre.client.service.ConnectionService
 import com.scooterre.client.service.OverlayBus
 import com.scooterre.client.service.OverlayData
 import com.scooterre.client.service.WearBridge
+import com.scooterre.client.service.WearDocsBridge
 import com.scooterre.client.reminder.InsuranceSchedule
 import com.scooterre.client.ui.Lang
 import com.scooterre.client.ui.resolveLang
@@ -420,6 +421,11 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         }
         val v = _state.value
         WearBridge.pushSettings(getApplication(), v.units, v.language, v.confirmCritical, v.rideTracking)
+        // Seeds the watch's document cache for every saved scooter too - documentJob (in
+        // DocumentsController) keeps it current after this, but a watch paired for the first time
+        // (or re-paired) needs this initial push. Rendering/reading pages is blocking I/O, so this
+        // runs off the main thread; the app's own UI is unaffected either way (best-effort).
+        devices.forEach { (device, _) -> viewModelScope.launch(Dispatchers.IO) { WearDocsBridge.pushDocuments(getApplication(), device.mac) } }
     }
 
     fun onImportTextChanged(text: String) = _state.update { it.copy(importText = text) }

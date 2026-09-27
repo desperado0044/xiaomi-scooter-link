@@ -42,7 +42,7 @@ private fun watchBatteryPercent(context: Context): Int {
  * and stays right here, "Yes" disconnects and returns to the selection screen. Not connected (or
  * mid-attempt only briefly): back behaves normally, nothing to confirm. */
 @Composable
-fun DeviceScreen(mac: String, onDisconnectedBack: () -> Unit, onOpenSettings: (String) -> Unit) {
+fun DeviceScreen(mac: String, onDisconnectedBack: () -> Unit, onOpenSettings: (String) -> Unit, onOpenDocuments: (String) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val devices by WatchState.devices.collectAsState()
@@ -98,6 +98,16 @@ fun DeviceScreen(mac: String, onDisconnectedBack: () -> Unit, onOpenSettings: (S
                         ) {
                             Text(connectionLabel(connectedToThis, connection.phase))
                         }
+                    }
+
+                    item {
+                        // Always reachable, regardless of connection state - the whole point is
+                        // showing registration papers etc. "im Kontrollfall ohne Handy", which has
+                        // nothing to do with whether the scooter itself is currently BLE-connected.
+                        Button(
+                            colors = ButtonDefaults.filledTonalButtonColors(),
+                            onClick = { onOpenDocuments(device.mac) },
+                        ) { Text("Dokumente") }
                     }
 
                     if (connectedToThis && connection.phase == ConnectPhase.CONNECTED) {

@@ -6,6 +6,7 @@ import android.net.Uri
 import com.scooterre.client.protocol.*
 import com.scooterre.client.reminder.InsuranceReminders
 import com.scooterre.client.reminder.InsuranceSchedule
+import com.scooterre.client.service.WearDocsBridge
 import com.scooterre.client.ui.*
 import com.scooterre.client.update.*
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +94,10 @@ internal class DocumentsController(
             try {
                 withContext(Dispatchers.IO) { block(mac) }
                 _state.update { it.copy(error = null) }
+                // Keep a paired watch's cache current after every change (add/rename/delete/append
+                // a page) - see WearDocsBridge's doc comment for why this alone is enough (the Data
+                // Layer itself guarantees delivery once the watch is reachable, no retry needed here).
+                withContext(Dispatchers.IO) { WearDocsBridge.pushDocuments(app, mac) }
             } catch (e: Exception) {
                 android.util.Log.e("ScooterVM", "document operation failed", e)
                 _state.update { it.copy(error = s.docsImportError) }
@@ -112,6 +117,7 @@ internal class DocumentsController(
                 is DocumentsBundle.ImportResult.Ok -> {
                     refreshDocuments()
                     _state.update { it.copy(docsMessage = s.docsReceived(result.added), error = null) }
+                    withContext(Dispatchers.IO) { WearDocsBridge.pushDocuments(app, result.mac) }
                 }
                 DocumentsBundle.ImportResult.UnknownScooter -> _state.update { it.copy(error = s.docsUnknownScooter, docsMessage = null) }
                 else -> _state.update { it.copy(error = s.importInvalidCodeError, docsMessage = null) }

@@ -36,4 +36,10 @@ object WatchState {
      * ("Update suchen" on the App screen), exactly like the phone's own daily-check-then-manual-
      * download split. */
     val availableUpdateVersion = MutableStateFlow<String?>(null)
+
+    /** Each known scooter's cached documents (see WearDocumentStore), keyed by [KnownDevice.mac].
+     * Kept current by StatusListenerService's onDataChanged handler; DocumentsScreen also actively
+     * re-reads the Data Layer's current DataItem when it opens, as a second, independent path to
+     * the same up-to-date state (rather than only relying on having received the push). */
+    val documents = MutableStateFlow<Map<String, List<WearDocument>>>(emptyMap())
 }

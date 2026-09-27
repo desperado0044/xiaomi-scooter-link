@@ -19,7 +19,7 @@ object DocumentsBundle {
     const val FORMAT = "scooterre-docs-v1"
 
     sealed interface ImportResult {
-        data class Ok(val added: Int) : ImportResult
+        data class Ok(val added: Int, val mac: String) : ImportResult
         data object UnknownScooter : ImportResult
         data object Invalid : ImportResult
     }
@@ -78,7 +78,7 @@ object DocumentsBundle {
                 if (!DeviceBundle.SAFE_NAME.matches(doc.id) || doc.pages.any { !DeviceBundle.SAFE_NAME.matches(it) }) continue
                 docStore.restore(device.mac, doc) { page -> entries["documents/${doc.id}/$page"]?.let { ByteArrayInputStream(it) } }
             }
-            ImportResult.Ok(docStore.count(device.mac) - before)
+            ImportResult.Ok(docStore.count(device.mac) - before, device.mac)
         } catch (e: Exception) {
             ImportResult.Invalid
         }

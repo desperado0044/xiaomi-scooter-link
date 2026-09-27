@@ -15,8 +15,11 @@ class WearApplication : Application() {
         super.onCreate()
         // Restore what a previous sync from the phone left on disk, so the UI has something to
         // show immediately - StatusListenerService keeps these current from here on.
-        WatchState.devices.value = DeviceRegistry(this).list()
+        val devices = DeviceRegistry(this).list()
+        WatchState.devices.value = devices
         WatchState.settings.value = WatchSettingsStore.load(this)
+        val docStore = WearDocumentStore(this)
+        WatchState.documents.value = devices.associate { normalizeMac(it.mac) to docStore.list(it.mac) }
         UpdateInstaller.cleanup(this)
         // Cheap, JSON-only, throttled to once a day - see WearUpdate's doc comment.
         scope.launch { WearUpdate.autoCheckIfDue(this@WearApplication) }

@@ -3,13 +3,19 @@ package com.scooterre.client.protocol
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.pdf.PdfRenderer
 import android.media.ExifInterface
+import android.os.ParcelFileDescriptor
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.util.UUID
+
+private const val PDF_RENDER_WIDTH_PX = 1600
 
 /** One document of a scooter: either several JPEG pages (photos/scans) or a single PDF. */
 data class ScooterDocument(val id: String, val name: String, val pages: List<String>, val addedMillis: Long) {
@@ -54,6 +60,51 @@ class DocumentStore(private val context: Context) {
     fun count(mac: String): Int = list(mac).size
 
     fun file(mac: String, doc: ScooterDocument, page: Int): File = File(docDir(mac, doc.id), doc.pages[page])
+
+    /** Real page count: the page list size for a photo document, or the PDF's own page count
+     * (opened via PdfRenderer, same as ui/DocumentViewer.kt's pdfPageCount) for a PDF document -
+     * a PDF is stored as one file regardless of how many pages it has. Used by the Wear documents
+     * sync, which needs to know how many JPEG pages it's about to render/send. */
+    fun pageCount(mac: String, doc: ScooterDocument): Int {
+        if (!doc.isPdf) return doc.pages.size
+        return runCatching {
+            val pfd = ParcelFileDescriptor.open(file(mac, doc, 0), ParcelFileDescriptor.MODE_READ_ONLY)
+            val renderer = PdfRenderer(pfd)
+            try {
+                renderer.pageCount
+            } finally {
+                renderer.close()
+                pfd.close()
+            }
+        }.getOrDefault(0)
+    }
+
+    /** JPEG bytes for one page of [doc] - read directly for a photo page, or rendered fresh from
+     * the PDF (same rendering as ui/DocumentViewer.kt's renderPdfPage, just returning JPEG bytes
+     * instead of a Bitmap) for a PDF page. Used by the Wear documents sync so the watch never needs
+     * its own PDF renderer - it only ever receives and shows plain JPEGs. */
+    fun readPageJpeg(mac: String, doc: ScooterDocument, index: Int): ByteArray {
+        if (!doc.isPdf) return file(mac, doc, index).readBytes()
+        val pfd = ParcelFileDescriptor.open(file(mac, doc, 0), ParcelFileDescriptor.MODE_READ_ONLY)
+        val renderer = PdfRenderer(pfd)
+        return try {
+            val page = renderer.openPage(index)
+            try {
+                val height = (PDF_RENDER_WIDTH_PX.toFloat() * page.height / page.width).toInt()
+                val bitmap = Bitmap.createBitmap(PDF_RENDER_WIDTH_PX, height, Bitmap.Config.ARGB_8888)
+                bitmap.eraseColor(Color.WHITE)
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                val out = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
+                out.toByteArray()
+            } finally {
+                page.close()
+            }
+        } finally {
+            renderer.close()
+            pfd.close()
+        }
+    }
 
     /** Stores a photo/image as a new one-page document. Throws if the image cannot be decoded. */
     fun addImage(mac: String, name: String, open: () -> InputStream?): ScooterDocument {
