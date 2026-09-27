@@ -65,6 +65,7 @@ import com.scooterre.client.update.UpdateDownloadResult
 import com.scooterre.client.update.UpdateInfo
 import com.scooterre.client.update.UpdateInstaller
 import com.scooterre.client.update.UpdateProblem
+import com.scooterre.client.update.installedVersionOf
 import com.scooterre.client.ui.connectedChannelName
 import com.scooterre.client.ui.connectedNotificationText
 import com.scooterre.client.ui.modelDisplayName

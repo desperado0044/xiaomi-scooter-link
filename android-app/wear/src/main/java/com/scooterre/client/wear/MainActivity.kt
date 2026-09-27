@@ -70,6 +70,7 @@ private fun SelectionScreen() {
     val status by WatchState.status.collectAsState()
     val connection by WearConnection.state.collectAsState()
     var notice by remember { mutableStateOf<String?>(null) }
+    var updateStatus by remember { mutableStateOf<String?>(null) }
 
     MaterialTheme {
         AppScaffold {
@@ -150,6 +151,14 @@ private fun SelectionScreen() {
                         }
                     }
                     notice?.let { text -> item { Text(text) } }
+
+                    item { ListHeader { Text("App") } }
+                    item {
+                        Button(onClick = {
+                            scope.launch { WearUpdate.checkAndInstall(context) { updateStatus = it } }
+                        }) { Text("Update suchen") }
+                    }
+                    updateStatus?.let { text -> item { Text(text) } }
                 }
             }
         }

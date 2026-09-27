@@ -2,6 +2,7 @@ package com.scooterre.client.wear
 
 import android.app.Application
 import com.scooterre.client.protocol.DeviceRegistry
+import com.scooterre.client.update.UpdateInstaller
 
 class WearApplication : Application() {
     override fun onCreate() {
@@ -10,5 +11,6 @@ class WearApplication : Application() {
         // show immediately - StatusListenerService keeps these current from here on.
         WatchState.devices.value = DeviceRegistry(this).list()
         WatchState.settings.value = WatchSettingsStore.load(this)
+        UpdateInstaller.cleanup(this)
     }
 }

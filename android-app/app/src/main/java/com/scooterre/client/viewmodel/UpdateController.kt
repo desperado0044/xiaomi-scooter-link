@@ -1,6 +1,5 @@
 package com.scooterre.client.viewmodel
 
-import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
 import com.scooterre.client.protocol.*
@@ -12,10 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.update
-
-/** The version that is installed now ("0" if it cannot be read). */
-internal fun installedVersionOf(app: Application): String =
-    runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull() ?: "0"
 
 /** The newest release seen at the last check, but only if it is still newer than what is installed
  * now - so the notice disappears by itself right after updating. */
@@ -39,7 +34,7 @@ internal class UpdateController(private val shared: Shared) {
         if (!_state.value.updateCheck) return
         val now = System.currentTimeMillis()
         if (force || now - prefs.getLong(KEY_UPDATE_LAST_CHECK, 0L) >= UPDATE_CHECK_INTERVAL_MS) {
-            val latest = withContext(Dispatchers.IO) { UpdateChecker.fetchLatest() } ?: return
+            val latest = withContext(Dispatchers.IO) { UpdateChecker.fetchLatest(AssetKind.PHONE) } ?: return
             prefs.edit().putLong(KEY_UPDATE_LAST_CHECK, now).putString(KEY_UPDATE_TAG, latest.version).putString(KEY_UPDATE_URL, latest.url)
                 .putString(KEY_UPDATE_APK_URL, latest.apkUrl).putString(KEY_UPDATE_APK_SHA, latest.apkSha256).apply()
         }

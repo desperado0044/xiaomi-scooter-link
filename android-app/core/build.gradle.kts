@@ -28,6 +28,8 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // Update checking/downloading (UpdateChecker/UpdateInstaller) - shared by :app and :wear.
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20231013")

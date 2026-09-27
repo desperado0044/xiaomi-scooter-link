@@ -1,9 +1,14 @@
 package com.scooterre.client.update
 
+import android.content.Context
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+
+/** The version that is installed now ("0" if it cannot be read) - shared by :app and :wear. */
+fun installedVersionOf(context: Context): String =
+    runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "0"
 
 /** A newer release: its version, the release page and (if it has one) the APK asset to download.
  * [apkSha256] is GitHub's published digest of that asset, when available. */
@@ -13,6 +18,11 @@ data class UpdateInfo(
     val apkUrl: String? = null,
     val apkSha256: String? = null,
 )
+
+/** Which app is checking - a release can carry both APKs (see the Wear OS companion), and each
+ * side must only ever pick up its own, never the other one's (same applicationId + signing
+ * certificate, so the other one would otherwise parse as a perfectly valid "update"). */
+enum class AssetKind { PHONE, WATCH }
 
 /** Looks up the newest published GitHub release of this project. Public API, no login; drafts and
  * pre-releases are never returned by `/releases/latest`. */
@@ -28,7 +38,7 @@ object UpdateChecker {
         .build()
 
     /** Blocking - call off the main thread. Null on any failure (offline, rate-limited, bad JSON). */
-    fun fetchLatest(): UpdateInfo? {
+    fun fetchLatest(kind: AssetKind): UpdateInfo? {
         return try {
             val request = Request.Builder()
                 .url(LATEST_URL)
@@ -37,15 +47,18 @@ object UpdateChecker {
                 .build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return null
-                parseRelease(response.body?.string() ?: return null)
+                parseRelease(response.body?.string() ?: return null, kind)
             }
         } catch (e: Exception) {
             null
         }
     }
 
-    /** Reads a GitHub release JSON. The APK asset is only taken if it really lives under [DOWNLOAD_PREFIX]. */
-    fun parseRelease(body: String): UpdateInfo? {
+    /** Reads a GitHub release JSON. The APK asset is only taken if it really lives under
+     * [DOWNLOAD_PREFIX] and matches [kind] - a release can carry both the phone and the watch APK
+     * (they share an applicationId and signing certificate, see [AssetKind]'s doc comment), so the
+     * "wear" name marker is the only thing telling them apart here. */
+    fun parseRelease(body: String, kind: AssetKind): UpdateInfo? {
         return try {
             val json = JSONObject(body)
             var apkUrl: String? = null
@@ -56,12 +69,9 @@ object UpdateChecker {
                     val asset = assets.getJSONObject(i)
                     val name = asset.optString("name")
                     val url = asset.optString("browser_download_url")
-                    // Since the Wear OS companion (:wear) shares this app's applicationId and
-                    // signing certificate (required for the Data Layer API - see its build.gradle
-                    // comment), its APK would otherwise look like a perfectly valid update for
-                    // THIS app too. Never picking an asset with "wear" in the name is what keeps
-                    // a release that bundles both APKs from ever offering the wrong one here.
-                    if (name.endsWith(".apk", ignoreCase = true) && !name.contains("wear", ignoreCase = true) && url.startsWith(DOWNLOAD_PREFIX)) {
+                    val isWearAsset = name.contains("wear", ignoreCase = true)
+                    val matchesKind = if (kind == AssetKind.WATCH) isWearAsset else !isWearAsset
+                    if (name.endsWith(".apk", ignoreCase = true) && matchesKind && url.startsWith(DOWNLOAD_PREFIX)) {
                         apkUrl = url
                         apkSha = normalizeDigest(asset.optString("digest"))
                         break

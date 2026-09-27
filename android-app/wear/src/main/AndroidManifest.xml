@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Lets the "Update suchen" action open the system installer (the user still confirms). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".WearApplication"
@@ -57,5 +60,10 @@
                     android:pathPrefix="/scooterre/settings" />
             </intent-filter>
         </service>
+
+        <!-- Result of an app update installed through the "Update suchen" action. -->
+        <receiver
+            android:name="com.scooterre.client.update.UpdateInstallReceiver"
+            android:exported="false" />
     </application>
 </manifest>

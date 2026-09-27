@@ -18,6 +18,7 @@ class UpdateCheckerTest {
     fun theApkAssetAndItsDigestAreTaken() {
         val info = UpdateChecker.parseRelease(
             release("""{"name":"scooter-5pro-ble-v2.3.apk","browser_download_url":"$apkUrl","digest":"sha256:${sha.uppercase()}"}"""),
+            AssetKind.PHONE,
         )!!
         assertEquals("2.3", info.version)
         assertEquals(apkUrl, info.apkUrl)
@@ -28,46 +29,41 @@ class UpdateCheckerTest {
     fun anApkFromAnotherPlaceIsNeverOffered() {
         val info = UpdateChecker.parseRelease(
             release("""{"name":"evil.apk","browser_download_url":"https://example.com/evil.apk","digest":"sha256:$sha"}"""),
+            AssetKind.PHONE,
         )!!
         assertNull(info.apkUrl)
         assertEquals("2.3", info.version) // the release page link still works
     }
 
     @Test
-    fun theWearCompanionApkIsNeverOfferedAsThisAppsUpdate() {
+    fun eachSideOnlyEverPicksItsOwnApkRegardlessOfUploadOrder() {
         // The Wear OS companion shares this app's applicationId and signing certificate (required
-        // for the Data Layer API), so its APK alone would otherwise look like a valid update here
-        // too - regardless of upload order, only the phone APK may ever be picked.
+        // for the Data Layer API), so either APK alone would otherwise look like a valid update
+        // for the other side too - only the "wear" name marker tells them apart.
         val wearUrl = UpdateChecker.DOWNLOAD_PREFIX + "v2.3/scooter-link-wear-0.2.apk"
-        val wearFirst = UpdateChecker.parseRelease(
-            release(
-                """{"name":"scooter-link-wear-0.2.apk","browser_download_url":"$wearUrl"},""" +
-                    """{"name":"scooter-5pro-ble-v2.3.apk","browser_download_url":"$apkUrl"}""",
-            ),
-        )!!
-        assertEquals(apkUrl, wearFirst.apkUrl)
+        val bothAssets = """{"name":"scooter-link-wear-0.2.apk","browser_download_url":"$wearUrl"},""" +
+            """{"name":"scooter-5pro-ble-v2.3.apk","browser_download_url":"$apkUrl"}"""
+        val bothAssetsReversed = """{"name":"scooter-5pro-ble-v2.3.apk","browser_download_url":"$apkUrl"},""" +
+            """{"name":"scooter-link-wear-0.2.apk","browser_download_url":"$wearUrl"}"""
 
-        val phoneFirst = UpdateChecker.parseRelease(
-            release(
-                """{"name":"scooter-5pro-ble-v2.3.apk","browser_download_url":"$apkUrl"},""" +
-                    """{"name":"scooter-link-wear-0.2.apk","browser_download_url":"$wearUrl"}""",
-            ),
-        )!!
-        assertEquals(apkUrl, phoneFirst.apkUrl)
+        for (assets in listOf(bothAssets, bothAssetsReversed)) {
+            assertEquals(apkUrl, UpdateChecker.parseRelease(release(assets), AssetKind.PHONE)!!.apkUrl)
+            assertEquals(wearUrl, UpdateChecker.parseRelease(release(assets), AssetKind.WATCH)!!.apkUrl)
+        }
     }
 
     @Test
     fun aReleaseWithoutApkOrDigestStillParses() {
-        assertNull(UpdateChecker.parseRelease(release("")) !!.apkUrl)
-        val noDigest = UpdateChecker.parseRelease(release("""{"name":"a.apk","browser_download_url":"$apkUrl"}"""))!!
+        assertNull(UpdateChecker.parseRelease(release(""), AssetKind.PHONE)!!.apkUrl)
+        val noDigest = UpdateChecker.parseRelease(release("""{"name":"a.apk","browser_download_url":"$apkUrl"}"""), AssetKind.PHONE)!!
         assertEquals(apkUrl, noDigest.apkUrl)
         assertNull(noDigest.apkSha256)
     }
 
     @Test
     fun brokenJsonGivesNull() {
-        assertNull(UpdateChecker.parseRelease("not json"))
-        assertNull(UpdateChecker.parseRelease("""{"assets":[]}"""))
+        assertNull(UpdateChecker.parseRelease("not json", AssetKind.PHONE))
+        assertNull(UpdateChecker.parseRelease("""{"assets":[]}""", AssetKind.PHONE))
     }
 
     @Test
