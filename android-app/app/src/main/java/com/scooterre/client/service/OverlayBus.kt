@@ -3,7 +3,13 @@ package com.scooterre.client.service
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** What the floating overlay shows: the remaining range, the distance of the ride, or "Standby". */
-data class OverlayData(val rest: String = "", val trip: String = "", val battery: String = "", val standby: Boolean = false)
+data class OverlayData(
+    val rest: String = "",
+    val trip: String = "",
+    val battery: String = "",
+    val rideTime: String = "",
+    val standby: Boolean = false,
+)
 
 /**
  * Hands the overlay its data. The connection lives in the view model, the overlay window in [ConnectionService];

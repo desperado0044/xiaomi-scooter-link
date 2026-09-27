@@ -52,8 +52,11 @@ class OverlayController(private val context: Context, private val scope: Corouti
         restText?.text = if (data.standby) "Standby" else data.rest.ifEmpty { "–" }
         batteryText?.text = data.battery
         batteryText?.visibility = if (data.standby || data.battery.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
-        tripText?.text = data.trip
-        tripText?.visibility = if (data.standby || data.trip.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+        // Trip distance and the own ride timer share one line (keeps the overlay to 3 lines, small enough not to
+        // cover a map underneath) instead of a fourth line of their own.
+        val tripLine = listOf(data.trip, data.rideTime).filter { it.isNotEmpty() }.joinToString(" · ")
+        tripText?.text = tripLine
+        tripText?.visibility = if (data.standby || tripLine.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
     }
 
     private fun create() {

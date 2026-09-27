@@ -31,6 +31,8 @@ import com.scooterre.client.protocol.PollTab
 import com.scooterre.client.protocol.RangeEstimate
 import com.scooterre.client.protocol.RideBook
 import com.scooterre.client.protocol.RideBookStore
+import com.scooterre.client.protocol.RideTimer
+import com.scooterre.client.protocol.formatRideTimerDuration
 import com.scooterre.client.protocol.PropertyExplorer
 import com.scooterre.client.protocol.ProtocolException
 import com.scooterre.client.protocol.ScooterDocument
@@ -236,6 +238,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
             rest = restKm?.let { "%.0f %s".format(java.util.Locale.US, units.distance(it), units.distanceUnit) } ?: "",
             trip = tripKm?.let { "%.1f %s".format(java.util.Locale.US, units.distance(it), units.distanceUnit) } ?: "",
             battery = battery?.let { "$it %" } ?: "",
+            rideTime = state.ownRideTime,
         )
     }
 
@@ -831,8 +834,13 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
                 refreshAll()
             }
             "IS_RIDING" -> {
-                val wasRiding = ((before as? Long) ?: 0L) != 0L
                 val isRiding = ((after as? Long) ?: 0L) != 0L
+                // Fed on every read, not just on change - RideTimer needs a steady drumbeat to notice a long
+                // enough stop and end the ride on its own (see its own comment for why it doesn't just mirror
+                // the scooter's own RIDING_TIME, which resets on short stops).
+                val rideMs = rideTimer.onReading(isRiding, now)
+                _state.update { it.copy(ownRideTime = rideMs?.let(::formatRideTimerDuration) ?: "") }
+                val wasRiding = ((before as? Long) ?: 0L) != 0L
                 if (before != null && wasRiding != isRiding) {
                     // A ride starts or ends: odometer and trip values right away (a ride's end also closes its
                     // segment), and the scooter has logged the ride by now.
@@ -914,6 +922,10 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         connectionScope?.cancel()
         connectionScope = null
         liveRide.reset()
+        // The own ride timer is scoped to one connection (see RideTimer's own comment) - any teardown, including
+        // the brief one right before an automatic reconnect, ends it.
+        rideTimer.reset()
+        _state.update { it.copy(ownRideTime = "") }
         protocol?.dispose()
         protocol = null
         screenStack.clear()
@@ -992,6 +1004,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private val liveRide = LiveRideTracker()
+    private val rideTimer = RideTimer()
 
     /** When the scooter last answered a read successfully - see the watchdog in connectAndLogin. */
     @Volatile private var lastDataMs = 0L

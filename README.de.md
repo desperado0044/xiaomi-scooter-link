@@ -116,7 +116,7 @@ ist ein Hobbyprojekt.
   (Walk/Drive/Sport) und Rekuperation direkt umschaltbar, dazu Fahrzustand, Strecke, Fahrzeit,
   Ø-/Max-Tempo, Sperre, Scooter-Suche und Fehlerstatus — alles auf einem Bildschirm.
 - **Seitenmenü** mit den Bereichen Fahrt, Akku, Einstellungen, Fahrzeug, Identifikation,
-  Fahrtenbuch, Verlauf und App-Einstellungen. Alle bekannten MIoT-Properties mit korrekter
+  Fahrtenbuch, Verlauf, Hilfe und App-Einstellungen. Alle bekannten MIoT-Properties mit korrekter
   Einheiten-/Skalierungsanzeige und Klartext statt Rohwerten; die meisten Einstellungen sind
   setzbar, mit Sicherheits-/Rechtshinweis bei regional heiklen Funktionen (Tempomat, Rücklicht). Durch Wischen nach links/rechts wechselst du zwischen den
   Bereichen des Scooters (nicht in den App-Einstellungen).

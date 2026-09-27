@@ -91,16 +91,17 @@ import kotlinx.coroutines.launch
  * derived data from BatteryHistoryStore - so [namesFor] returns null for both. Properties shown
  * in Overview are also still reachable from their normal category tab - nothing is removed from
  * Ride/Battery/Settings/Vehicle by also curating a copy into Overview. */
-private enum class DashboardSection(val emoji: String, val label: (AppStrings) -> String) {
-    OVERVIEW("🏠", { it.sectionOverview }),
-    RIDE("🛴", { it.tabRide }),
-    BATTERY("🔋", { it.tabBattery }),
-    SETTINGS("⚙️", { it.tabSettings }),
-    VEHICLE("🚨", { it.tabVehicleStatus }),
-    IDENTIFICATION("🪪", { it.tabIdentification }),
-    RIDE_LOG("📖", { it.tabRideLog }),
-    HISTORY("📈", { it.tabHistory }),
-    APP_SETTINGS("🎛️", { it.sectionApp }),
+private enum class DashboardSection(val emoji: String, val label: (AppStrings, Lang) -> String) {
+    OVERVIEW("🏠", { s, _ -> s.sectionOverview }),
+    RIDE("🛴", { s, _ -> s.tabRide }),
+    BATTERY("🔋", { s, _ -> s.tabBattery }),
+    SETTINGS("⚙️", { s, _ -> s.tabSettings }),
+    VEHICLE("🚨", { s, _ -> s.tabVehicleStatus }),
+    IDENTIFICATION("🪪", { s, _ -> s.tabIdentification }),
+    RIDE_LOG("📖", { s, _ -> s.tabRideLog }),
+    HISTORY("📈", { s, _ -> s.tabHistory }),
+    APP_SETTINGS("🎛️", { s, _ -> s.sectionApp }),
+    HELP("❓", { _, lang -> helpTitle(lang) }),
 }
 
 private fun namesFor(section: DashboardSection, profile: SpecProfile): List<String>? = when (section) {
@@ -113,6 +114,7 @@ private fun namesFor(section: DashboardSection, profile: SpecProfile): List<Stri
     DashboardSection.RIDE_LOG -> profile.tabRideLog
     DashboardSection.HISTORY -> null
     DashboardSection.APP_SETTINGS -> null
+    DashboardSection.HELP -> null
 }
 
 /** The scooter tabs as horizontally swipeable pages - an alternative to the side menu. App settings
@@ -254,7 +256,7 @@ fun DashboardScreen(
                 DashboardSection.VEHICLE -> PollTab.VEHICLE
                 DashboardSection.IDENTIFICATION -> PollTab.IDENTIFICATION
                 DashboardSection.RIDE_LOG -> PollTab.RIDE_LOG
-                DashboardSection.HISTORY, DashboardSection.APP_SETTINGS -> PollTab.OTHER
+                DashboardSection.HISTORY, DashboardSection.APP_SETTINGS, DashboardSection.HELP -> PollTab.OTHER
             },
         )
     }
@@ -295,7 +297,7 @@ fun DashboardScreen(
                 DashboardSection.entries.forEach { section ->
                     NavigationDrawerItem(
                         icon = { Text(section.emoji, fontSize = 20.sp) },
-                        label = { Text(section.label(s)) },
+                        label = { Text(section.label(s, state.language)) },
                         selected = selectedSection == section,
                         onClick = { selectedSection = section; scope.launch { drawerState.close() } },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
@@ -376,7 +378,7 @@ fun DashboardScreen(
                 ) {
                     Text(selectedSection.emoji, fontSize = 18.sp)
                     Text(
-                        selectedSection.label(s),
+                        selectedSection.label(s, state.language),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(start = 8.dp),
@@ -423,6 +425,8 @@ fun DashboardScreen(
             // which isn't part of this screen at all).
             if (selectedSection == DashboardSection.APP_SETTINGS) {
                 AppSettingsContent(state, s, settings, isLandscape)
+            } else if (selectedSection == DashboardSection.HELP) {
+                HelpContentScreen(state.language, isLandscape)
             } else {
                 SectionPager(
                     selected = selectedSection,
@@ -673,7 +677,11 @@ private fun OverviewTileGrid(
             for (name in names) {
                 val property = propertiesByName[name]
                 if (property != null) {
-                    OverviewTile(property, state.values[name], lang, s, profile, onSetBool, Modifier.weight(1f))
+                    // RIDING_TIME shows the app's own ride timer instead of the scooter's raw value - confirmed
+                    // live, 2026-09-27: the scooter's own RIDING_TIME resets on a short stop, while this one keeps
+                    // running (see RideTimer's own comment).
+                    val override = if (name == "RIDING_TIME") state.ownRideTime.ifEmpty { null } else null
+                    OverviewTile(property, state.values[name], lang, s, profile, onSetBool, Modifier.weight(1f), override)
                 } else {
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -709,6 +717,8 @@ private fun OverviewTile(
     profile: SpecProfile,
     onSetBool: (SpecProperty, Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    /** Shown instead of [displayValue] when set (currently only RIDING_TIME - see the call site's comment). */
+    overrideValue: String? = null,
 ) {
     val writeOnly = property.name in profile.writeOnly
     val isError = !writeOnly && result != null && !result.ok
@@ -732,7 +742,7 @@ private fun OverviewTile(
                 )
                 if (!writeOnly) {
                     Text(
-                        if (result == null && LocalStandby.current) s.standbyLabel else displayValue(property, result, lang, s, LocalUnits.current),
+                        overrideValue ?: (if (result == null && LocalStandby.current) s.standbyLabel else displayValue(property, result, lang, s, LocalUnits.current)),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
                         color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,

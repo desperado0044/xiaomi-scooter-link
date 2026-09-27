@@ -78,6 +78,8 @@ data class UiState(
     val orientationMode: OrientationMode = OrientationMode.AUTO,
     val keepScreenOn: Boolean = true,
     val overlayEnabled: Boolean = false,
+    /** The app's own ride timer (see [com.scooterre.client.protocol.RideTimer]), formatted; empty while not riding. */
+    val ownRideTime: String = "",
     val autoBrightness: Boolean = false,
     val units: UnitSystem = UnitSystem.METRIC,
     val autoConnect: Boolean = false,

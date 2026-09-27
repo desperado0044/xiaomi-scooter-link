@@ -109,7 +109,7 @@ no promise of support or of a schedule — this is a hobby project.
   state, trip, ride time, average/top speed, lock, find-my-scooter and fault status — all on one
   screen.
 - **Side menu** with the sections Ride, Battery, Settings, Vehicle, Identification, Ride log,
-  History and App settings. All known MIoT properties with correct unit/scaling display and plain
+  History, Help and App settings. All known MIoT properties with correct unit/scaling display and plain
   text instead of raw values; most settings are settable, with a safety/legal note for regionally
   sensitive functions (cruise control, tail light). Swipe left/right to move between the scooter's
   sections (not in App settings).
