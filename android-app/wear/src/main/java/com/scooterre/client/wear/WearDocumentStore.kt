@@ -105,6 +105,7 @@ fun applyDocumentsPush(context: Context, mac: String, map: DataMap) {
             runCatching { Tasks.await(dataClient.getFdForAsset(asset)).inputStream.use { it.readBytes() } }.getOrNull()
         }
         WatchState.documents.value = WatchState.documents.value + (normalizeMac(mac) to store.list(mac))
+        android.util.Log.i("WearDocumentStore", "applied documents push for $mac (${docs.size} docs)")
     } catch (e: Exception) {
         android.util.Log.w("WearDocumentStore", "could not apply a documents push for $mac", e)
     }

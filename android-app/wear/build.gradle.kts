@@ -24,8 +24,8 @@ android {
         applicationId = "com.scooterre.client"
         minSdk = 30 // Wear OS 3+ (Compose Material 3 for Wear requires this baseline)
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0"
+        versionCode = 5
+        versionName = "1.1"
     }
 
     // Same release key as the phone app - see the comment above for why this must match.
@@ -98,6 +98,10 @@ dependencies {
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("androidx.wear.tiles:tiles:1.6.0-rc02")
     implementation("androidx.wear.tiles:tiles-material:1.6.0-rc02")
+    // TileService methods return a Guava ListenableFuture; only the tiny listenablefuture-only
+    // artifact is pulled in transitively (just the interface, no Futures.immediateFuture() etc.) -
+    // full Guava is needed for that helper, same as Google's own Wear Tiles samples add.
+    implementation("com.google.guava:guava:33.3.1-android")
 
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 

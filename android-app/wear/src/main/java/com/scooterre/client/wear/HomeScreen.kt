@@ -73,20 +73,32 @@ fun HomeScreen(onOpenDevice: (String) -> Unit, onOpenApp: () -> Unit) {
 private fun RelayCard(status: RelayStatus?) {
     Card(onClick = {}) {
         Text("Vom Handy", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (status == null) {
-            Text("Keine Daten", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            if (status.standby) Text("Ruhezustand", style = MaterialTheme.typography.bodyMedium)
-            val line1 = listOfNotNull(
-                status.battery.takeIf { it.isNotEmpty() }?.let { "Akku $it" },
-                status.rest.takeIf { it.isNotEmpty() }?.let { "Rest $it" },
+        val line1 = status?.let {
+            listOfNotNull(
+                it.battery.takeIf { b -> b.isNotEmpty() }?.let { b -> "Akku $b" },
+                it.rest.takeIf { r -> r.isNotEmpty() }?.let { r -> "Rest $r" },
             ).joinToString(" · ")
-            if (line1.isNotEmpty()) Text(line1, style = MaterialTheme.typography.bodyMedium)
-            val line2 = listOfNotNull(
-                status.trip.takeIf { it.isNotEmpty() }?.let { "Strecke $it" },
-                status.rideTime.takeIf { it.isNotEmpty() }?.let { "Fahrzeit $it" },
+        }.orEmpty()
+        val line2 = status?.let {
+            listOfNotNull(
+                it.trip.takeIf { t -> t.isNotEmpty() }?.let { t -> "Strecke $t" },
+                it.rideTime.takeIf { rt -> rt.isNotEmpty() }?.let { rt -> "Fahrzeit $rt" },
             ).joinToString(" · ")
-            if (line2.isNotEmpty()) Text(line2, style = MaterialTheme.typography.bodyMedium)
+        }.orEmpty()
+        when {
+            // Never received anything from the phone at all (e.g. before the first "Mit Uhr
+            // verbinden"/relay push ever arrives) - genuinely different from the phone having
+            // pushed an explicit "not connected right now" below.
+            status == null -> Text("Noch keine Daten vom Handy", style = MaterialTheme.typography.bodyMedium)
+            status.standby -> Text("Ruhezustand", style = MaterialTheme.typography.bodyMedium)
+            // WearSync pushes this empty RelayStatus explicitly when the phone disconnects from a
+            // scooter (see its stop()) - previously showed nothing at all here, which read as
+            // broken rather than as "nothing to relay right now".
+            line1.isEmpty() && line2.isEmpty() -> Text("Handy nicht mit Scooter verbunden", style = MaterialTheme.typography.bodyMedium)
+            else -> {
+                if (line1.isNotEmpty()) Text(line1, style = MaterialTheme.typography.bodyMedium)
+                if (line2.isNotEmpty()) Text(line2, style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }

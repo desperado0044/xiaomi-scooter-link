@@ -36,6 +36,9 @@ class StatusListenerService : WearableListenerService() {
                             standby = map.getBoolean("standby"),
                             updatedAt = map.getLong("updatedAt"),
                         )
+                        // Keeps the Tile ("Widget") current without it polling on its own - see
+                        // ScooterTileService's doc comment.
+                        androidx.wear.tiles.TileService.getUpdater(this).requestUpdate(ScooterTileService::class.java)
                     }
                     path.startsWith(DOCS_PATH_PREFIX) -> {
                         val mac = path.removePrefix(DOCS_PATH_PREFIX)

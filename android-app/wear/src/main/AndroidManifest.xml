@@ -72,5 +72,21 @@
         <receiver
             android:name="com.scooterre.client.update.UpdateInstallReceiver"
             android:exported="false" />
+
+        <!-- The Tile ("Widget", swipe left/right from the watch face) - see its own doc comment
+             for why it only ever reads WatchState.status, never touches WearConnection/BLE. -->
+        <service
+            android:name=".ScooterTileService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/ic_launcher" />
+        </service>
     </application>
 </manifest>

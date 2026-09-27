@@ -57,6 +57,8 @@ object WearDocsBridge {
                 dataMap.putLong("updatedAt", System.currentTimeMillis())
             }.asPutDataRequest().setUrgent()
             Wearable.getDataClient(context).putDataItem(request)
+                .addOnSuccessListener { android.util.Log.i("WearDocsBridge", "pushed documents for $mac (${docs.size} docs)") }
+                .addOnFailureListener { e -> android.util.Log.w("WearDocsBridge", "putDataItem failed for $mac", e) }
         } catch (e: Exception) {
             // No Play services / no paired watch / a page failed to render - the phone app's own
             // documents feature is unaffected either way, this is best-effort background sync.
