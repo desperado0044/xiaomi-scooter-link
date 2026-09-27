@@ -54,8 +54,14 @@ object UpdateChecker {
             if (assets != null) {
                 for (i in 0 until assets.length()) {
                     val asset = assets.getJSONObject(i)
+                    val name = asset.optString("name")
                     val url = asset.optString("browser_download_url")
-                    if (asset.optString("name").endsWith(".apk", ignoreCase = true) && url.startsWith(DOWNLOAD_PREFIX)) {
+                    // Since the Wear OS companion (:wear) shares this app's applicationId and
+                    // signing certificate (required for the Data Layer API - see its build.gradle
+                    // comment), its APK would otherwise look like a perfectly valid update for
+                    // THIS app too. Never picking an asset with "wear" in the name is what keeps
+                    // a release that bundles both APKs from ever offering the wrong one here.
+                    if (name.endsWith(".apk", ignoreCase = true) && !name.contains("wear", ignoreCase = true) && url.startsWith(DOWNLOAD_PREFIX)) {
                         apkUrl = url
                         apkSha = normalizeDigest(asset.optString("digest"))
                         break
