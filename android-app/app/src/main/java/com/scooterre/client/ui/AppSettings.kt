@@ -88,6 +88,7 @@ data class SettingsActions(
     val onSetConfirmCritical: (Boolean) -> Unit,
     val onSetRideTracking: (Boolean) -> Unit,
     val onSetUpdateCheck: (Boolean) -> Unit,
+    val onCheckUpdateNow: () -> Unit,
     val onSetAppLock: (Boolean) -> Unit,
     val onSetInsuranceReminder: (Boolean) -> Unit,
     val onTestInsuranceNotification: () -> Unit,
@@ -242,6 +243,12 @@ fun AppSettingsContent(state: UiState, s: AppStrings, settings: SettingsActions,
         SettingsCard {
             Text(s.aboutLabel, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
             Text(s.aboutVersion(versionName), style = MaterialTheme.typography.bodyMedium)
+            // The daily automatic check (above) only runs once a day and only while enabled - this
+            // always works immediately regardless of either, for right after a new release.
+            TextButton(onClick = settings.onCheckUpdateNow) { Text(updateCheckNowLabel(state.language)) }
+            if (state.updateJustCheckedUpToDate) {
+                Text(updateUpToDateMessage(state.language), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             state.availableUpdate?.let { UpdateBanner(it, state, s, Modifier.padding(vertical = 6.dp)) }
             Text(
                 s.aboutBody,

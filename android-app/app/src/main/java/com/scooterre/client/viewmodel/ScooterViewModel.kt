@@ -213,6 +213,7 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     fun downloadUpdate() = updates.downloadUpdate()
     fun installUpdate() = updates.installUpdate()
     fun checkForUpdateOnStart() = updates.checkForUpdateOnStart()
+    fun checkForUpdateNow() = updates.checkNow()
     fun setUpdateCheck(enabled: Boolean) = updates.setUpdateCheck(enabled)
 
     fun refreshInsuranceState() = insurance.refreshInsuranceState()

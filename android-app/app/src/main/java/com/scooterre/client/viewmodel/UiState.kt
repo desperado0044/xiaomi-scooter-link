@@ -98,6 +98,10 @@ data class UiState(
     val lastBackupMillis: Long = 0L,
     val backupMessage: String? = null,
     val availableUpdate: UpdateInfo? = null,
+    // Set right after a manual "Nach Updates suchen" tap, cleared on the next one - true means the
+    // check ran and found nothing newer (an update DOES set availableUpdate/the banner instead, so
+    // this only ever needs to cover the "you're already up to date" case).
+    val updateJustCheckedUpToDate: Boolean = false,
     // "Download update": progress 0..100 while downloading, ready once the file is downloaded and
     // verified, and what went wrong (the file is then discarded).
     val updateProgress: Int? = null,

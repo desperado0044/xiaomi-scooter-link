@@ -947,6 +947,16 @@ private val REGION_WARNINGS_EN: Map<String, String> = mapOf(
 fun regionWarning(propertyName: String, lang: Lang): String? =
     (if (lang == Lang.DE) REGION_WARNINGS_DE else REGION_WARNINGS_EN)[propertyName]
 
+// Kept as plain functions rather than AppStrings fields on purpose: AppStrings' constructor was
+// already right at the JVM's hard 255-parameter-per-method limit (adding these two as fields
+// caused a real ClassFormatError - "Too many arguments in method signature" - confirmed via a
+// clean rebuild, not a cache/daemon artifact). Any further additions to the UI text should
+// follow this same pattern rather than growing AppStrings further.
+fun updateCheckNowLabel(lang: Lang): String = if (lang == Lang.DE) "Jetzt prüfen" else "Check now"
+
+fun updateUpToDateMessage(lang: Lang): String =
+    if (lang == Lang.DE) "Kein Update verfügbar - du hast die neueste Version." else "No update available - you're on the latest version."
+
 /** TIRE_MAINTENANCE (3.7) is a packed decimal string "[state:1][interval-days:3][remaining-days:3]"
  * (e.g. "2030030") - decode logic ported from the reference plugin's _fmt_tire(), not guessed.
  * state '2' means the reminder is off, anything else means it's on. */

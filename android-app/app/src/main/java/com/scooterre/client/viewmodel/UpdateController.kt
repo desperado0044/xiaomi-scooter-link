@@ -85,6 +85,27 @@ internal class UpdateController(private val shared: Shared) {
         scope.launch { refreshUpdateInfo(force = false) }
     }
 
+    /** Manual "Nach Updates suchen" tap. Deliberately bypasses both the daily-interval throttle
+     * AND the updateCheck toggle (see refreshUpdateInfo) - the toggle is about the automatic daily
+     * habit, not about blocking an explicit request the user just made. */
+    fun checkNow() {
+        _state.update { it.copy(updateJustCheckedUpToDate = false) }
+        scope.launch {
+            val latest = withContext(Dispatchers.IO) { UpdateChecker.fetchLatest(AssetKind.PHONE) }
+            if (latest != null) {
+                prefs.edit()
+                    .putLong(KEY_UPDATE_LAST_CHECK, System.currentTimeMillis())
+                    .putString(KEY_UPDATE_TAG, latest.version)
+                    .putString(KEY_UPDATE_URL, latest.url)
+                    .putString(KEY_UPDATE_APK_URL, latest.apkUrl)
+                    .putString(KEY_UPDATE_APK_SHA, latest.apkSha256)
+                    .apply()
+            }
+            val available = storedUpdate(prefs, installedVersionOf(app))
+            _state.update { it.copy(availableUpdate = available, updateJustCheckedUpToDate = available == null) }
+        }
+    }
+
     fun setUpdateCheck(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_UPDATE_CHECK, enabled).apply()
         _state.update { it.copy(updateCheck = enabled, availableUpdate = if (enabled) storedUpdate(prefs, installedVersionOf(app)) else null) }

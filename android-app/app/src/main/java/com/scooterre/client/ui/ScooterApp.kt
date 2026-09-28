@@ -113,6 +113,7 @@ fun ScooterApp(viewModel: ScooterViewModel = viewModel()) {
         onSetConfirmCritical = viewModel::setConfirmCritical,
         onSetRideTracking = viewModel::setRideTracking,
         onSetUpdateCheck = viewModel::setUpdateCheck,
+        onCheckUpdateNow = viewModel::checkForUpdateNow,
         onRestoreBackup = viewModel::restoreBackup,
         onBackupCreated = viewModel::markBackupDone,
         onDismissBackupMessage = viewModel::dismissBackupMessage,
