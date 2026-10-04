@@ -134,11 +134,26 @@ private object SpecProperties {
         SpecProperty(3, 1, "BATTERY_STATUS", SpecType.UINT8),
         SpecProperty(3, 2, "BATTERY_TEMPERATURE", SpecType.INT8),
         SpecProperty(3, 3, "SCOOTER_TEMPERATURE", SpecType.INT8),
-        // Confirmed live 2026-09-27 (SET probe with the phone connected, scooter locked): a
-        // motion-triggered theft alarm, not just a status signal - setting it while locked arms
-        // it, and it went off immediately when the wheels were turned. Declared BOOL (arm/disarm),
-        // not the originally-assumed unconfirmed UINT8 - both encode identically as one byte, so
-        // this doesn't change the wire format, only how the app now interprets and shows it.
+        // Confirmed live 2026-09-27 on a 5 Pro (SET probe with the phone connected, scooter
+        // locked): a motion-triggered theft alarm, not just a status signal - setting it while
+        // locked arms it, and it went off immediately when the wheels were turned. Declared BOOL
+        // (arm/disarm), not the originally-assumed unconfirmed UINT8 - both encode identically as
+        // one byte, so this doesn't change the wire format, only how the app now interprets it.
+        //
+        // NOT confirmed working the same way on the 5 Max. Observed live 2026-09-28 on a real 5
+        // Max, unlocked: tapping the app's Alarm switch triggered a BLE request/response exchange
+        // (confirmed via logcat) and no app-level error appeared afterward, but the switch's
+        // read-back value stayed off. The actual decoded SET status is NOT known - the app doesn't
+        // log it, the traffic is encrypted, and no error being thrown is not the same as having
+        // read status 0; that would need SpecClient-level logging this build doesn't have. A
+        // locked attempt on the same unit was reported by its owner as behaving the same, but
+        // wasn't independently diagnosed. The property/table entry itself is identical on both
+        // models (2026-09-19 full sweep), but whatever the Pro's firmware does with this write,
+        // this Max unit's firmware (seen: 2.7.0_0015.0016) does not visibly do the same. Left
+        // SETTABLE/shown in the UI regardless - the switch always reads the real live value back,
+        // so it can't show something false, it just won't visibly do anything on an affected Max.
+        // Unknown whether this is every 5 Max or specific to this firmware version - not re-tested
+        // on the originally-confirmed unit.
         SpecProperty(3, 4, "LOCK_WARNING", SpecType.BOOL),
         SpecProperty(3, 5, "MILEAGE_UNIT", SpecType.UINT8),
         // Packed decimal string "[state 1][interval 3][remaining-days 3]" - see

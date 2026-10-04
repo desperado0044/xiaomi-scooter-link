@@ -92,9 +92,16 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun ensureBluetoothPermissions() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        val needed = listOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
-            .filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
+        // Android 12+ (API 31+): the dedicated runtime Bluetooth permissions.
+        // Android 6-11 (API < 31): BLE scan results are withheld without location permission -
+        // confirmed live on a real Android 10 device (Huawei VOG-L29/EMUI 12), this was missing
+        // entirely before, so the scooter never showed up despite classic BLUETOOTH being granted.
+        val candidates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            listOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
+        } else {
+            listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        val needed = candidates.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
         if (needed.isNotEmpty()) requestPermissions.launch(needed.toTypedArray())
     }
 }

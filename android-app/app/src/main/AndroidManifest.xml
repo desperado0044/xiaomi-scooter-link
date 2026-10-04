@@ -6,6 +6,12 @@
          attempting a connection, since BLUETOOTH_SCAN/BLUETOOTH_CONNECT below don't exist yet. -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <!-- Android 6-11 (API < 31): BLE scan results are withheld by the OS unless location
+         permission is granted, independent of the above classic Bluetooth permissions. Confirmed
+         live on a real Android 10 device (Huawei VOG-L29/EMUI 12): scooter never appeared because
+         this was missing entirely, not requested anywhere. Not needed from Android 12 on, since
+         BLUETOOTH_SCAN above already has usesPermissionFlags="neverForLocation". -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />

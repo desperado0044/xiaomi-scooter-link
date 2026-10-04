@@ -372,7 +372,10 @@ cd android-app
 ```
 
 The APK lands under `android-app/app/build/outputs/apk/debug/`. Requires the Android SDK,
-minSdk 26 (Android 8.0); tested on Android 15/16, plus (BLE connectivity check only) Android 9.
+minSdk 26 (Android 8.0); tested on Android 15/16, plus Android 10 (full pairing, Huawei
+VOG-L29/EMUI 12) and Android 9 (BLE connectivity check only). Android 8-11 need
+`ACCESS_FINE_LOCATION` for BLE scan results (requested automatically since v4.3) on top of the
+classic Bluetooth permissions - missing it silently empties scan results instead of erroring.
 
 Release builds (`./gradlew assembleRelease`) are signed with a key read from
 `~/.scooter-signing/keystore.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`);
