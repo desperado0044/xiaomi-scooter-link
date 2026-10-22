@@ -422,15 +422,37 @@ class SpecClient(private val ble: ScooterBleManager, private val keys: MiCrypto.
         return t
     }
 
+    // get()/set() used to let a ProtocolException("Characteristic ... not found") - thrown by
+    // charFor() inside request() when the GATT connection has gone stale mid-call (a genuine BLE
+    // drop, not the already-handled graceful-disconnect race from connectionScope cancellation,
+    // see ScooterViewModel's doc comment on that field) - propagate uncaught. The one caller that
+    // surfaced this in practice is readRideLogSlots()'s sequential LOG_1..LOG_5 loop: no per-slot
+    // try/catch there, so a drop on e.g. LOG_3 aborted the whole sweep with that technical message
+    // (reported as GitHub issue "Xiaomi Scooter 5 error missing characteristics", 2026-10-18).
+    // Fixed at THIS level instead of only in that one loop: every other get()/set() caller in the
+    // app (the regular auto-refresh poll cycle, single-property UI reads/writes) had the exact
+    // same latent exposure to a mid-request disconnect, just not yet reported. Treated exactly
+    // like the existing "no reply within timeoutMs" case (status/return -1) - callers already
+    // handle that outcome correctly (SpecReadResult.ok is false, a failed slot is simply skipped).
     suspend fun get(property: SpecProperty, timeoutMs: Long = 3000L): SpecReadResult {
         val frame = buildGetFrame(property.siid, property.piid, nextTid())
-        val plaintext = requestWithRetry(frame, timeoutMs) ?: return SpecReadResult(property, ByteArray(0), -1)
+        val plaintext = try {
+            requestWithRetry(frame, timeoutMs)
+        } catch (e: ProtocolException) {
+            android.util.Log.w("SpecClient", "get(${property.name}) failed - connection dropped mid-request: ${e.message}")
+            null
+        } ?: return SpecReadResult(property, ByteArray(0), -1)
         return parseSingleReply(property, plaintext)
     }
 
     suspend fun set(property: SpecProperty, value: ByteArray, timeoutMs: Long = 8000L): Int {
         val frame = buildSetFrame(property.siid, property.piid, property.type.code, value, nextTid())
-        val plaintext = requestWithRetry(frame, timeoutMs) ?: return -1
+        val plaintext = try {
+            requestWithRetry(frame, timeoutMs)
+        } catch (e: ProtocolException) {
+            android.util.Log.w("SpecClient", "set(${property.name}) failed - connection dropped mid-request: ${e.message}")
+            null
+        } ?: return -1
         // SET reply element: [siid][piid u16][status u16] (7 bytes after the 6-byte header)
         if (plaintext.size < 11) return -1
         return (plaintext[9].toInt() and 0xFF) or ((plaintext[10].toInt() and 0xFF) shl 8)
