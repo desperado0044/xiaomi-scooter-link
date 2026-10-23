@@ -7,7 +7,9 @@ supported models and the technical background see the [main README](../README.md
 
 - **First time**: "Add scooter" → cloud login (password or QR code) → the app fetches the
   Bluetooth key (`ltmk`) once and stores it, encrypted, on the phone. From then on it never talks
-  to the cloud again for that scooter.
+  to the cloud again for that scooter. If a device PIN is needed, it's most likely found in Xiaomi
+  Home under the scooter's own settings → "Share device" - not confirmed for every account/app
+  version, see "Getting started" in the [README](../README.md).
 - **Every time after**: tap the scooter's tile in the device list. The app waits for the scooter's
   own Bluetooth advertisement, then connects directly - this also means the scooter has to be
   reachable (switched on, or - for models that support it - locked and in its sleep state; see

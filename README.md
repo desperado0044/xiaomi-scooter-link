@@ -325,13 +325,25 @@ install, the watch's own in-app updater handles new versions without adb at all.
 ## Getting started
 
 1. Download the APK from the [Releases](https://github.com/desperado0044/xiaomi-scooter-link/releases)
-   and install it (sideload, allow "unknown sources"; not a Play Store release). Allow the Bluetooth
-   permission. From version 2.2 on the APK is signed with a dedicated release key (certificate SHA-256
-   see "Building"). **Switching from 2.1 or older:** those versions were debug-signed, so Android will
-   not accept the update over the old app — create a backup once in the app settings, uninstall the
-   old app, install the new one and restore the backup. Updates work normally after that.
+   and install it (sideload; not a Play Store release). Two prompts along the way, both normal for
+   any app installed this way:
+   - **"For your security, your phone isn't allowed to install unknown apps from this source"** →
+     tap "Settings" in that banner, allow installs from your browser/file manager, go back and
+     install. The exact wording/menu depends on the Android version and phone brand.
+   - **Play Protect**: a "this app wasn't scanned" or similar warning may show up. Choosing to
+     install anyway is expected here (there is no Play Store listing for this app to scan against).
+   Then allow the Bluetooth permission when the app asks for it. From version 2.2 on the APK is
+   signed with a dedicated release key (certificate SHA-256 see "Building"). **Switching from 2.1 or
+   older:** those versions were debug-signed, so Android will not accept the update over the old app
+   — create a backup once in the app settings, uninstall the old app, install the new one and
+   restore the backup. Updates work normally after that.
 2. "Add scooter": cloud login (QR code or password); if a sharing PIN is set, enter the device PIN
-   — the app fetches the key once. Alternatively import an export file or code.
+   — the app fetches the key once. Alternatively import an export file or code. **Where to find the
+   PIN:** most likely in the Xiaomi Home app under the scooter's own settings → "Share device" (the
+   underlying Xiaomi API call is literally named for device sharing) — this is the best-known
+   location, not a confirmed one for every account/region/app version; if it's not there, check
+   anywhere else Xiaomi Home shows a device-sharing option. If your account never set one, you can
+   leave the field empty.
 3. Tap the scooter in the device list — the overview opens.
 4. Documents: "Documents" tile → Scan, Photos or File.
 5. Second phone (e.g. family): on the first phone "Export", share the file, on the second

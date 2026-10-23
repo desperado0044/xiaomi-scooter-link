@@ -341,15 +341,29 @@ Erstinstallation übernimmt der In-App-Updater der Uhr künftige Versionen ganz 
 ## Erste Schritte
 
 1. APK aus den [Releases](https://github.com/desperado0044/xiaomi-scooter-link/releases)
-   laden und installieren (Sideload, „unbekannte Quellen" erlauben; kein Play-Store-Release).
-   Bluetooth-Berechtigung erlauben. Ab Version 2.2 ist die APK mit einem eigenen Release-Schlüssel
-   signiert (Zertifikat-SHA-256 siehe „Bauen"). **Umstieg von 2.1 oder älter:** Diese Versionen waren
-   Debug-signiert, Android lässt das Update deshalb nicht über die alte App zu — einmal in den
-   App-Einstellungen eine Sicherung erstellen, die alte App deinstallieren, die neue installieren und
-   die Sicherung wiederherstellen. Danach laufen Updates normal.
+   laden und installieren (Sideload; kein Play-Store-Release). Dabei erscheinen normalerweise zwei
+   Warnungen, beide normal bei jeder so installierten App:
+   - **„Aus Sicherheitsgründen darf dein Smartphone keine unbekannten Apps aus dieser Quelle
+     installieren"** → in diesem Banner auf „Einstellungen" tippen, Installation aus dem
+     Browser/Dateimanager erlauben, zurück und installieren. Der genaue Wortlaut/Menüpfad hängt von
+     Android-Version und Hersteller ab.
+   - **Play Protect**: evtl. erscheint eine Warnung wie „Diese App wurde nicht gescannt". Trotzdem
+     installieren ist hier normal und erwartet (es gibt keinen Play-Store-Eintrag, gegen den
+     gescannt werden könnte).
+   Danach die Bluetooth-Berechtigung erlauben, wenn die App danach fragt. Ab Version 2.2 ist die APK
+   mit einem eigenen Release-Schlüssel signiert (Zertifikat-SHA-256 siehe „Bauen"). **Umstieg von 2.1
+   oder älter:** Diese Versionen waren Debug-signiert, Android lässt das Update deshalb nicht über
+   die alte App zu — einmal in den App-Einstellungen eine Sicherung erstellen, die alte App
+   deinstallieren, die neue installieren und die Sicherung wiederherstellen. Danach laufen Updates
+   normal.
 2. „Scooter hinzufügen": Cloud-Login (QR-Code oder Passwort), bei gesetzter Sharing-PIN die
    Geräte-PIN eingeben — die App holt den Schlüssel einmalig ab. Alternativ eine Exportdatei bzw.
-   einen Code importieren.
+   einen Code importieren. **Wo man die PIN findet:** am ehesten in der Xiaomi-Home-App unter den
+   Geräteeinstellungen des Scooters → „Gerät teilen"/„Share device" (der zugrunde liegende
+   Xiaomi-API-Aufruf heißt wörtlich so) — das ist die plausibelste, aber nicht für jeden
+   Account/jede Region/App-Version bestätigte Fundstelle; falls dort nichts ist, nach einer anderen
+   Geräte-Teilen-Option in Xiaomi Home suchen. Wurde nie eine PIN gesetzt, kann das Feld leer
+   bleiben.
 3. Scooter in der Geräteliste antippen — die Übersicht öffnet sich.
 4. Dokumente: Kachel „Dokumente" → Scannen, Fotos oder Datei.
 5. Zweites Handy (z.B. Familie): am ersten Handy „Exportieren", Datei teilen, am zweiten
