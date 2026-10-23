@@ -480,6 +480,14 @@ nicht in Standard-App-Menüs) — noch nicht verifiziert.
 
 **Kein Brute-Force versuchen** (Risiko: Account-Sperre durch Xiaomis Cloud-API-Ratenbegrenzung).
 
+**RESOLVED (2026-10-23, per Google-Suche gegen Xiaomis eigene Support-FAQ bestätigt):** Die
+Vermutung oben war richtig, nur der Fundort war falsch gesucht. Es ist ein **Sicherheitspasswort,
+das man selbst in der Mi-Home/Xiaomi-Home-App setzt**, nicht etwas, das man in Account-/
+Geräteteilen-Menüs suchen muss: Fahrzeug-Startseite → „Mehr" → Zusätzliche Einstellungen →
+Sicherheitseinstellungen → Passwort. Direkter Abruf der mi.com-FAQ-Seiten war zweimal per
+WebFetch blockiert (403, Bot-Schutz) - der Pfad stammt aus dem von der Google-Suche selbst
+zitierten Auszug dieser FAQ-Seiten, nicht aus einer eigenen Live-Verifikation am Gerät.
+
 ### ✅ ERFOLG — kompletter Login live verifiziert (2026-09-13)
 
 Mit PIN vom Nutzer (`webui/get_ltmk.py <PIN>` → `ltmk` gespeichert unter

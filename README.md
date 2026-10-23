@@ -337,13 +337,11 @@ install, the watch's own in-app updater handles new versions without adb at all.
    older:** those versions were debug-signed, so Android will not accept the update over the old app
    — create a backup once in the app settings, uninstall the old app, install the new one and
    restore the backup. Updates work normally after that.
-2. "Add scooter": cloud login (QR code or password); if a sharing PIN is set, enter the device PIN
-   — the app fetches the key once. Alternatively import an export file or code. **Where to find the
-   PIN:** most likely in the Xiaomi Home app under the scooter's own settings → "Share device" (the
-   underlying Xiaomi API call is literally named for device sharing) — this is the best-known
-   location, not a confirmed one for every account/region/app version; if it's not there, check
-   anywhere else Xiaomi Home shows a device-sharing option. If your account never set one, you can
-   leave the field empty.
+2. "Add scooter": cloud login (QR code or password); if a security PIN is set, enter the device PIN
+   — the app fetches the key once. Alternatively import an export file or code. **This PIN is one
+   you set yourself**, not something to go looking for: in the Xiaomi Home app, on the scooter's
+   vehicle page → "More" → Additional settings → Security settings → Password. If you never set
+   one there, leave the field empty.
 3. Tap the scooter in the device list — the overview opens.
 4. Documents: "Documents" tile → Scan, Photos or File.
 5. Second phone (e.g. family): on the first phone "Export", share the file, on the second

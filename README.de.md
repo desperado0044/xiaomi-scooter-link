@@ -356,14 +356,12 @@ Erstinstallation übernimmt der In-App-Updater der Uhr künftige Versionen ganz 
    die alte App zu — einmal in den App-Einstellungen eine Sicherung erstellen, die alte App
    deinstallieren, die neue installieren und die Sicherung wiederherstellen. Danach laufen Updates
    normal.
-2. „Scooter hinzufügen": Cloud-Login (QR-Code oder Passwort), bei gesetzter Sharing-PIN die
+2. „Scooter hinzufügen": Cloud-Login (QR-Code oder Passwort), bei gesetztem Sicherheits-PIN die
    Geräte-PIN eingeben — die App holt den Schlüssel einmalig ab. Alternativ eine Exportdatei bzw.
-   einen Code importieren. **Wo man die PIN findet:** am ehesten in der Xiaomi-Home-App unter den
-   Geräteeinstellungen des Scooters → „Gerät teilen"/„Share device" (der zugrunde liegende
-   Xiaomi-API-Aufruf heißt wörtlich so) — das ist die plausibelste, aber nicht für jeden
-   Account/jede Region/App-Version bestätigte Fundstelle; falls dort nichts ist, nach einer anderen
-   Geräte-Teilen-Option in Xiaomi Home suchen. Wurde nie eine PIN gesetzt, kann das Feld leer
-   bleiben.
+   einen Code importieren. **Diesen PIN legt man selbst fest**, man muss ihn also nicht suchen: in
+   der Xiaomi-Home-App auf der Fahrzeug-Startseite des Scooters → „Mehr" → Zusätzliche
+   Einstellungen → Sicherheitseinstellungen → Passwort. Wurde dort nie eins gesetzt, kann das Feld
+   leer bleiben.
 3. Scooter in der Geräteliste antippen — die Übersicht öffnet sich.
 4. Dokumente: Kachel „Dokumente" → Scannen, Fotos oder Datei.
 5. Zweites Handy (z.B. Familie): am ersten Handy „Exportieren", Datei teilen, am zweiten

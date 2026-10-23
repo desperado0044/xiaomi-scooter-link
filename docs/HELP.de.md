@@ -7,9 +7,10 @@ unterstützten Modellen und technischem Hintergrund siehe die [Haupt-README](../
 
 - **Beim ersten Mal**: „Scooter hinzufügen" → Cloud-Login (Passwort oder QR-Code) → die App holt den
   Bluetooth-Schlüssel (`ltmk`) einmal ab und speichert ihn verschlüsselt auf dem Handy. Danach
-  spricht sie für diesen Scooter nie wieder mit der Cloud. Ist dabei eine Geräte-PIN nötig, findet
-  sie sich am ehesten in Xiaomi Home unter den Geräteeinstellungen → „Gerät teilen" – nicht für
-  jeden Account/jede App-Version bestätigt, siehe „Erste Schritte" in der [README](../README.de.md).
+  spricht sie für diesen Scooter nie wieder mit der Cloud. Ist dabei eine Geräte-PIN nötig: das ist
+  ein Sicherheits-PIN, den man selbst in Xiaomi Home festgelegt hat (Fahrzeug-Startseite → „Mehr" →
+  Zusätzliche Einstellungen → Sicherheitseinstellungen → Passwort), siehe „Erste Schritte" in der
+  [README](../README.de.md).
 - **Jedes weitere Mal**: auf die Kachel des Scooters in der Geräteliste tippen. Die App wartet auf
   die Bluetooth-Ankündigung des Scooters und verbindet dann direkt - das heißt auch, der Scooter
   muss erreichbar sein (eingeschaltet, oder - bei Modellen, die das unterstützen - gesperrt und im
