@@ -17,17 +17,29 @@ object PropertyExplorer {
 
     class Probe(val siid: Int, val piid: Int, val status: Int, val raw: ByteArray)
 
+    // A real scooter sometimes goes silent on a whole range of properties within one siid - not
+    // supported, not a NAK, just no reply (see SpecClient.requestWithRetry's comment: confirmed
+    // real behavior, not a connection problem). GIVE_UP_AFTER_SILENT used to abort the entire
+    // sweep the first time that happened, losing every later siid even though the scooter was
+    // still answering fine - reported in issue #1 (siid 3 piid 6+ silent, siids 4-8 never asked).
+    // Now a silent run only skips the rest of the CURRENT siid; two consecutive siids that are
+    // silent from their very first property are treated as a real dropped connection instead, and
+    // still abort the whole sweep (no point probing eight dead siids one by one).
     suspend fun sweep(spec: SpecClient, onSiid: (Int) -> Unit = {}): List<Probe> {
         val probes = mutableListOf<Probe>()
-        var silent = 0
+        var deadSiidsInARow = 0
         outer@ for (siid in 1..MAX_SIID) {
             onSiid(siid)
+            var silentInSiid = 0
+            var readableInSiid = 0
             for (piid in 1..MAX_PIID) {
                 val result = spec.get(SpecProperty(siid, piid, "PROBE", SpecType.STRING), timeoutMs = TIMEOUT_MS)
                 probes += Probe(siid, piid, result.status, result.raw)
-                silent = if (result.status == -1) silent + 1 else 0
-                if (silent >= GIVE_UP_AFTER_SILENT) break@outer
+                if (result.status == -1) silentInSiid++ else { silentInSiid = 0; readableInSiid++ }
+                if (silentInSiid >= GIVE_UP_AFTER_SILENT) break
             }
+            deadSiidsInARow = if (readableInSiid == 0) deadSiidsInARow + 1 else 0
+            if (deadSiidsInARow >= 2) break@outer
         }
         return probes
     }

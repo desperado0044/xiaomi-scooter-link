@@ -30,6 +30,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -320,7 +323,7 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f, fill = false)) {
                     // 48x48dp minimum touch target (Material Design guideline) even though the
                     // glyph itself is small - a shrunk-padding TextButton here measured well
                     // under that.
@@ -329,13 +332,26 @@ fun DashboardScreen(
                         modifier = Modifier.size(48.dp),
                     ) { Text("☰", fontSize = 22.sp) }
                     Column(modifier = Modifier.padding(start = 4.dp)) {
+                        // A long custom device name (e.g. a full "Xiaomi Electric Scooter 5 Pro"
+                        // fallback with no weight/overflow limit) could claim unlimited width in
+                        // this SpaceBetween row, squeezing the refresh/disconnect/language buttons
+                        // on the right down to near-zero - Compose then wraps their text one
+                        // character per line instead of refusing to render. The weight(fill=false)
+                        // on this Row bounds its width; a self-looping marquee shows the whole
+                        // name over time instead of truncating with an end-ellipsis, which for a
+                        // name like "Xiaomi Electric Scooter 5 Pro" would hide exactly the part
+                        // (Pro/Max) that distinguishes two scooters on the same account.
                         Text(
                             state.deviceName ?: modelDisplayName(state.activeModel, state.language),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(),
                         )
                         // The MAC address is a second line that only fits in portrait's spare
                         // height - landscape needs every dp for the values themselves instead.
+                        // No marquee here - a MAC is short and fixed-format, it should just fit
+                        // once the button row on the right (below) stops crowding it out.
                         if (!isLandscape) {
                             Text(state.macAddress, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -344,10 +360,18 @@ fun DashboardScreen(
                 if (state.busy) {
                     CircularProgressIndicator(modifier = Modifier.padding(4.dp).size(20.dp))
                 } else {
+                    // Material3's TextButton defaults to a generous minWidth (58.dp) and
+                    // contentPadding (16.dp horizontal) meant for a button standing alone - three
+                    // of them side by side here (refresh/disconnect/language) were eating most of
+                    // the row's width before the title even got a chance, which is the actual
+                    // root cause behind the squeezed-title layout bug, not the title's length by
+                    // itself. Tight custom padding + no enforced minWidth lets each button size to
+                    // its own text instead.
+                    val compactPadding = PaddingValues(horizontal = 6.dp)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = onRefreshAll) { Text(s.refreshButton) }
-                        TextButton(onClick = onDisconnect) { Text(s.disconnectButton) }
-                        TextButton(onClick = onToggleLanguage) { Text(if (state.language == Lang.DE) "🇩🇪" else "🇬🇧") }
+                        TextButton(onClick = onRefreshAll, contentPadding = compactPadding, modifier = Modifier.defaultMinSize(minWidth = 1.dp)) { Text(s.refreshButton) }
+                        TextButton(onClick = onDisconnect, contentPadding = compactPadding, modifier = Modifier.defaultMinSize(minWidth = 1.dp)) { Text(s.disconnectButton) }
+                        TextButton(onClick = onToggleLanguage, contentPadding = compactPadding, modifier = Modifier.defaultMinSize(minWidth = 1.dp)) { Text(if (state.language == Lang.DE) "🇩🇪" else "🇬🇧") }
                     }
                 }
             }

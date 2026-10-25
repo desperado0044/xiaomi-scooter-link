@@ -520,11 +520,22 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         finishCloudLogin(cloud)
     }
 
+    private var qrLoginJob: Job? = null
+
     /** Starts a QR login: fetches the QR image, shows it, then waits in the background for the
-     * scan/confirmation - no password needed at all, works for any Mi account. */
+     * scan/confirmation - no password needed at all, works for any Mi account.
+     *
+     * Cancels any still-running previous attempt first: without this, tapping the button again
+     * (e.g. after a ticket looked stuck) left the old long-poll running for up to its full
+     * qrTimeoutSeconds, and whichever attempt's background coroutine finished LAST won the race
+     * on `_state.update` - sometimes stomping a fresh QR code/URL with a stale one from an
+     * earlier, already-abandoned attempt. Looked like "the QR code expired no matter how fast I
+     * am", but was a missing-cancellation bug, not a timing problem (found 2026-10-25 debugging
+     * issue #1's login flow). */
     fun startQrLogin() {
+        qrLoginJob?.cancel()
         val cloud = XiaomiCloudClient()
-        viewModelScope.launch {
+        qrLoginJob = viewModelScope.launch {
             _state.update { it.copy(busy = true, busyMessage = s.qrLoadingBusy, error = null) }
             val start: QrLoginStart
             try {

@@ -260,11 +260,22 @@ fun LoginScreen(
                         CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
                     }) { Text(s.webLoginButton) }
                     TextButton(onClick = {
-                        // Explicit chooser so the user can pick the app that actually holds the
-                        // scooter's account session - a plain ACTION_VIEW can silently land in a
-                        // different installed Xiaomi/Mi app that isn't logged into that account.
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        context.startActivity(Intent.createChooser(intent, s.qrOpenChooserTitle))
+                        // account.xiaomi.com login links are handled by Xiaomi's own account app
+                        // (com.xiaomi.account) - confirmed via `pm resolve-activity`, NOT by Xiaomi
+                        // Home (com.xiaomi.smarthome), which has no intent filter for this URL at
+                        // all. Target it explicitly: it already carries this phone's real Xiaomi
+                        // session (the same one Xiaomi Home itself uses), where the plain chooser
+                        // below it defaults to Chrome's generic web sign-in page instead - a
+                        // technically valid login, but not guaranteed to resolve the same account
+                        // session (see issue #1 investigation, 2026-10-25). Falls back to the old
+                        // chooser if that app isn't installed.
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage("com.xiaomi.account")
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: android.content.ActivityNotFoundException) {
+                            val fallback = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            context.startActivity(Intent.createChooser(fallback, s.qrOpenChooserTitle))
+                        }
                     }) { Text(s.qrOpenButton) }
                 }
             }
