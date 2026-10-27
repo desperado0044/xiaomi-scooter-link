@@ -1202,7 +1202,17 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun runExplorer(spec: SpecClient) {
         Diagnostics.note("explorer: start")
-        val probes = withContext(Dispatchers.IO) { PropertyExplorer.sweep(spec) { siid -> updateBusyMessage(s.exploringProgress(siid)) } }
+        // Feed every successful probe to the same connection watchdog that normal dashboard reads
+        // use (see lastDataMs/noteData) - without this, a sweep running longer than NO_DATA_MS gets
+        // killed as "no answer from the scooter" mid-run even while it's still reading fine, because
+        // none of its successes were visible to that watchdog (issue #1, 2026-10-27).
+        val probes = withContext(Dispatchers.IO) {
+            PropertyExplorer.sweep(
+                spec,
+                onSiid = { siid -> updateBusyMessage(s.exploringProgress(siid)) },
+                onProbe = { probe -> if (probe.status == 0) lastDataMs = System.currentTimeMillis() },
+            )
+        }
         Diagnostics.note("explorer: ${probes.count { it.status == 0 }} readable of ${probes.size}")
         _state.update { it.copy(explorerReport = PropertyExplorer.report(probes)) }
     }

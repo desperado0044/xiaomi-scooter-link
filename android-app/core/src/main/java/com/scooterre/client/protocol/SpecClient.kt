@@ -344,8 +344,17 @@ object SpecProfiles {
 
     // Xiaomi's MIoT registry publishes no spec for these (device-info stub only), i.e. their table lives in
     // the Mi Home plugin like the 5 Pro's. The plain Electric Scooter 5 appears as t2336 (its battery
-    // model) - the cloud may also call it "xiaomi.scooter.5".
-    private val FULL_MODELS = setOf(MODEL_5PRO, MODEL_5MAX, "xiaomi.scooter.t2336", "xiaomi.scooter.5")
+    // model) - the cloud may also call it "xiaomi.scooter.5". "xiaomi.scooter.0005" is the real model
+    // string the cloud actually returns for it (confirmed both via miot-spec.org's public instance list
+    // and live from a user's own device, issue #1 2026-10-27) - the other two were guesses that never
+    // matched, which is why that device showed up as UNSUPPORTED. A third-party project (MIT-licensed
+    // github.com/Josefelipedev/trotinete-scooter5) independently reverse-engineered and live-tested this
+    // exact model (27.10.2026): same siid/piid table as the 5 Pro/5 Max (same BLE chip/firmware
+    // 2.7.0_0015), same ×100 float scaling for voltage/current/power/range - confirms FULL support is
+    // correct here, not just a guess. Two properties are confirmed inert on the real hardware there
+    // (ambient light (2,16) has no physical part, alarm (3,4) ignores writes) but GET-ing them still just
+    // returns a harmless status, so they don't need their own model variant to be excluded.
+    private val FULL_MODELS = setOf(MODEL_5PRO, MODEL_5MAX, "xiaomi.scooter.t2336", "xiaomi.scooter.5", "xiaomi.scooter.0005")
     private val READ_ONLY_MODELS = setOf("xiaomi.scooter.6max", "xiaomi.scooter.6plus")
 
     /** No model known (e.g. a scooter added from an export code) counts as [ModelSupport.FULL]: the first

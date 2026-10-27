@@ -25,7 +25,14 @@ object PropertyExplorer {
     // Now a silent run only skips the rest of the CURRENT siid; two consecutive siids that are
     // silent from their very first property are treated as a real dropped connection instead, and
     // still abort the whole sweep (no point probing eight dead siids one by one).
-    suspend fun sweep(spec: SpecClient, onSiid: (Int) -> Unit = {}): List<Probe> {
+    // onProbe lets a caller that's connected to a real scooter (ScooterViewModel) learn about every
+    // successful read as it happens, not just the final list - without it, a sweep taking longer than
+    // the connection watchdog's NO_DATA_MS (the caller's "no successful read in N seconds" disconnect
+    // check) looks like the link died even while the sweep is still making good progress, because none
+    // of its reads were visible to that watchdog until the whole sweep returned. Confirmed live on
+    // issue #1 (2026-10-27): a long sweep got killed as "no answer" mid-run despite plenty of readable
+    // properties throughout.
+    suspend fun sweep(spec: SpecClient, onSiid: (Int) -> Unit = {}, onProbe: (Probe) -> Unit = {}): List<Probe> {
         val probes = mutableListOf<Probe>()
         var deadSiidsInARow = 0
         outer@ for (siid in 1..MAX_SIID) {
@@ -34,7 +41,9 @@ object PropertyExplorer {
             var readableInSiid = 0
             for (piid in 1..MAX_PIID) {
                 val result = spec.get(SpecProperty(siid, piid, "PROBE", SpecType.STRING), timeoutMs = TIMEOUT_MS)
-                probes += Probe(siid, piid, result.status, result.raw)
+                val probe = Probe(siid, piid, result.status, result.raw)
+                probes += probe
+                onProbe(probe)
                 if (result.status == -1) silentInSiid++ else { silentInSiid = 0; readableInSiid++ }
                 if (silentInSiid >= GIVE_UP_AFTER_SILENT) break
             }
