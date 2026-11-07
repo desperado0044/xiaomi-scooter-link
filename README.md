@@ -2,7 +2,7 @@
 
 **English | [Deutsch](README.de.md)**
 
-**An alternative Android app for the Xiaomi Electric Scooter 5 Pro / 5 Max (the standard 5 should work as well) — dashboard, ride modes, lock, battery and ride data over Bluetooth Low Energy, no Mi Home app needed.**
+**An alternative Android app for the Xiaomi Electric Scooter 5 Pro / 5 Max / standard 5 — dashboard, ride modes, lock, battery and ride data over Bluetooth Low Energy, no Mi Home app needed.**
 
 Looking for the **Elite, 5 Plus or the 6 / 6 Lite / 6 Pro / 6 Max / 6 Ultra**? They have **experimental, read-only** support
 only (values are shown, nothing can be changed) — see [Supported models](#supported-models) for the status and how you can help.
@@ -10,7 +10,7 @@ only (values are shown, nothing can be changed) — see [Supported models](#supp
 ---
 
 A standalone Android client with public source code (non-commercial license) for **Xiaomi Electric Scooter** 5-series models
-(tested: 5 Pro and 5 Max; the standard 5 should work too) that talks to the vehicle directly over Bluetooth Low Energy —
+(tested: 5 Pro, 5 Max and the standard 5) that talks to the vehicle directly over Bluetooth Low Energy —
 without the official Mi Home app. The complete BLE auth protocol (ECDH P-256 → HKDF-SHA256 →
 AES-CCM) was reverse-engineered from scratch and is verified byte-for-byte against both real
 devices.
@@ -46,10 +46,10 @@ disclaimer).
 - **For use with your own devices only.** This software is intended for interoperability with
   devices that belong to you (or to someone who has explicitly granted you access, e.g. via the
   export/import feature) — not for someone else's device without the owner's consent.
-- **Tested on the Xiaomi Electric Scooter 5 Pro and 5 Max** (BLE chip RTL8762C, firmware
-  2.7.0_0015.x). The standard **Electric Scooter 5** (without "Pro"/"Max") **should work as
-  well**, but it has not been tested. Other models: see "Supported models" below — **do not use the app with
-  a model that is not listed there as tested**, it could show wrong values or change the wrong settings.
+- **Tested on the Xiaomi Electric Scooter 5 Pro, 5 Max and the standard Electric Scooter 5**
+  (BLE chip RTL8762C, firmware 2.7.0_0015.x). Other models: see "Supported models" below — **do
+  not use the app with a model that is not listed there as tested**, it could show wrong values or
+  change the wrong settings.
 - **No speed limiter is bypassed.** This project deliberately implements **no** function to
   change the regional speed limit or to flash the motor-controller firmware — that would require
   physical ST-Link/SWD access to the motor controller and was intentionally not built, regardless
@@ -82,8 +82,7 @@ disclaimer).
 
 | Model | Status |
 |---|---|
-| Electric Scooter **5 Pro**, **5 Max** | Tested (BLE chip RTL8762C, firmware 2.7.0_0015.x) |
-| Electric Scooter **5** (standard) | Should work (same group of models with a private property table), untested |
+| Electric Scooter **5 Pro**, **5 Max**, **5** (standard) | Tested (BLE chip RTL8762C, firmware 2.7.0_0015.x) |
 | Electric Scooter **6 Max** | **Read-only**, experimental: assumed to match the 5 series, not confirmed |
 | **Elite, 5 Plus, 6, 6 Lite, 6 Pro, 6 Ultra** | **Experimental, read-only.** Their values are numbered differently, so they have their own tables, built from Xiaomi's public specification and **never tried on a real device**. Values are shown exactly as the scooter sends them (no scaling or conversion, some names raw); nothing can be changed. Other models: only the read-only "Explore values" report |
 

@@ -855,7 +855,7 @@ fun propertyName(name: String, lang: Lang): String =
 fun modelDisplayName(model: String?, lang: Lang): String = when (model) {
     com.scooterre.client.protocol.SpecProfiles.MODEL_5PRO -> "Scooter 5 Pro"
     com.scooterre.client.protocol.SpecProfiles.MODEL_5MAX -> "Scooter 5 Max"
-    "xiaomi.scooter.t2336", "xiaomi.scooter.5" -> "Scooter 5"
+    "xiaomi.scooter.t2336", "xiaomi.scooter.5", "xiaomi.scooter.0005" -> "Scooter 5"
     "xiaomi.scooter.5plus" -> "Scooter 5 Plus"
     "xiaomi.scooter.elite" -> "Scooter Elite"
     "xiaomi.scooter.6" -> "Scooter 6"

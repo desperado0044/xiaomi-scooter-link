@@ -43,6 +43,7 @@ import com.scooterre.client.protocol.SpecProfiles
 import com.scooterre.client.protocol.SpecProperty
 import com.scooterre.client.protocol.SpecReadResult
 import com.scooterre.client.protocol.SpecType
+import com.scooterre.client.protocol.STATUS_PROPERTY_NOT_EXIST
 import com.scooterre.client.protocol.encodeValue
 import com.scooterre.client.protocol.BundleCrypto
 import com.scooterre.client.protocol.BundleFormats
@@ -1158,7 +1159,16 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
         // A write-only property (see SpecProfile.writeOnly) has no readable value to confirm
         // against - GET on it always fails, so skip the read-back entirely rather than surface a
         // spurious error for a SET that actually succeeded.
-        if (property.name !in _state.value.activeSpecProfile.writeOnly) refreshOneNow(spec, property)
+        if (property.name !in _state.value.activeSpecProfile.writeOnly) {
+            refreshOneNow(spec, property)
+        } else if (status == STATUS_PROPERTY_NOT_EXIST) {
+            // The device just confirmed this write-only trigger doesn't exist on it (e.g. a plain
+            // Electric Scooter 5 missing BLUETOOTH_CAR_SEARCH's whole siid group, issue #1) - a
+            // write-only property never goes through refreshAll()'s get() loop, so this is the only
+            // place such a result ever reaches `values`. Recorded the same way a GET would, so
+            // DashboardScreen's existing STATUS_PROPERTY_NOT_EXIST filter hides it from here on.
+            _state.update { it.copy(values = it.values + (property.name to SpecReadResult(property, ByteArray(0), status))) }
+        }
         // The scooter can silently reject a SET (wrong precondition, unsupported in this state,
         // etc.) - without checking this, a failed write looked indistinguishable from the switch
         // just not reacting to the tap, with no indication anything went wrong (see IS_LOCKED

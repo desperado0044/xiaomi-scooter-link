@@ -30,6 +30,15 @@ data class SpecReadResult(val property: SpecProperty, val raw: ByteArray, val st
     val value: Any? by lazy { if (ok) decodeValue(property.type, raw) else null }
 }
 
+/** Device firmware's answer for "this siid/piid does not exist" - as opposed to a timeout (-1,
+ * which says nothing about whether the property exists, just that this one attempt got no
+ * reply - see checkLayout()'s own distinction between the two). A property confirmed absent with
+ * this status on the connected device is hidden from the UI for the rest of the session instead
+ * of being shown with a permanent error - see DashboardScreen.kt's activeProperties/OverviewTileGrid
+ * filtering and ScooterViewModel.setBoolProperty's write-only handling (GitHub issue #1, the plain
+ * Electric Scooter 5 answering "property does not exist" for its entire siid=4 group). */
+const val STATUS_PROPERTY_NOT_EXIST = 0xf05f
+
 fun decodeValue(type: SpecType, raw: ByteArray): Any? {
     if (raw.isEmpty()) return null
     return when (type) {

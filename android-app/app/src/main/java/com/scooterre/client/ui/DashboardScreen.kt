@@ -82,6 +82,7 @@ import com.scooterre.client.protocol.SpecProfile
 import com.scooterre.client.protocol.SpecProperty
 import com.scooterre.client.protocol.SpecReadResult
 import com.scooterre.client.protocol.SpecType
+import com.scooterre.client.protocol.STATUS_PROPERTY_NOT_EXIST
 import com.scooterre.client.viewmodel.RefreshRate
 import com.scooterre.client.viewmodel.UiState
 import kotlinx.coroutines.launch
@@ -427,7 +428,12 @@ fun DashboardScreen(
                     )
                 } else {
                     val activeNames = namesFor(section, profile).orEmpty()
+                    // Confirmed absent on this exact device (status STATUS_PROPERTY_NOT_EXIST, not
+                    // merely a timeout - see that constant's doc comment) - hidden rather than shown
+                    // with a permanent error, e.g. the whole Identification tab on a plain Electric
+                    // Scooter 5 (GitHub issue #1).
                     val activeProperties = activeNames.mapNotNull { propertiesByName[it] }
+                        .filterNot { state.values[it.name]?.status == STATUS_PROPERTY_NOT_EXIST }
                     // Landscape gets two columns instead of one, halving how many rows tall the tab
                     // is - the same trick as the Overview split, so a long tab (Battery/Settings, 13
                     // properties) needs far less scrolling, ideally none, without shrinking any row.
@@ -702,7 +708,11 @@ private fun OverviewTileGrid(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             for (name in names) {
                 val property = propertiesByName[name]
-                if (property != null) {
+                // Same "confirmed absent on this device" filter as the category tabs (see
+                // STATUS_PROPERTY_NOT_EXIST's doc comment) - without it, a write-only trigger like
+                // BLUETOOTH_CAR_SEARCH that doesn't exist on this model would keep showing its
+                // button here even after setBoolProperty recorded the device's own refusal.
+                if (property != null && state.values[name]?.status != STATUS_PROPERTY_NOT_EXIST) {
                     // RIDING_TIME shows the app's own ride timer instead of the scooter's raw value - confirmed
                     // live, 2026-09-27: the scooter's own RIDING_TIME resets on a short stop, while this one keeps
                     // running (see RideTimer's own comment).
