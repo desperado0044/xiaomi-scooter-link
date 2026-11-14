@@ -102,9 +102,12 @@ außer du nimmst dieses Risiko in Kauf.
 **Rückmeldung (freiwillig):** Wenn du ein ungetestetes oder nicht unterstütztes Modell besitzt, kann die App helfen:
 In den App-Einstellungen fragt „Werte erkunden (nur lesen)" den Scooter, welche Werte er anbietet — ohne etwas zu
 schreiben — und erzeugt einen Text zum Kopieren; „Diagnose kopieren" ergänzt App-, Handy- und Scooter-Modell und das
-letzte Protokoll. Beides lässt Seriennummern, Schlüssel und MAC-Adressen weg. Den Text in einem Issue zu posten hilft,
-dein Modell aufzunehmen. Es gibt keine Verpflichtung und kein Versprechen auf Unterstützung oder einen Zeitplan — es
-ist ein Hobbyprojekt.
+letzte Protokoll. Beides lässt Seriennummern, Schlüssel und MAC-Adressen weg. Für die Elite/5-Plus/6er-Modelle (die mit
+eigener, unskalierter Tabelle) vergleicht „Skalierung kalibrieren" zusätzlich jeden Rohwert mit dem, was die
+Xiaomi-Home-App gerade für denselben Wert anzeigt, und schlägt den passenden Skalierungsfaktor vor. Beide Berichte
+haben einen eigenen „Auf GitHub melden"-Knopf, der ein vorausgefülltes Issue im Browser öffnet — die App postet
+nichts von sich aus, du meldest dich an und sendest es selbst ab. Es gibt keine Verpflichtung und kein Versprechen
+auf Unterstützung oder einen Zeitplan — es ist ein Hobbyprojekt.
 
 ## Funktionsumfang
 

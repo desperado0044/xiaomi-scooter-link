@@ -71,6 +71,15 @@ enum class RefreshRate(val stillScale: Double) { ECONOMY(4.0), NORMAL(2.0), FAST
 
 enum class Screen { LOGIN, DASHBOARD, DEVICE_PICKER, APP_SETTINGS, DOCUMENTS, DOCUMENT_VIEWER }
 
+/** [candidates] is every FLOAT property of the active profile whose scale is unconfirmed (see
+ * [com.scooterre.client.protocol.FamilyAProfiles]), paired with the raw value the normal dashboard
+ * poll already read - opening this dialog never triggers its own BLE round trip. [references] is
+ * what the owner has typed so far, keyed by property name. */
+data class CalibrationState(
+    val candidates: List<Pair<String, Float>>,
+    val references: Map<String, String> = emptyMap(),
+)
+
 data class UiState(
     val screen: Screen = Screen.LOGIN,
     val language: Lang = resolveLang(null),
@@ -167,6 +176,8 @@ data class UiState(
     val layoutMismatch: Boolean = false,
     // The text of a read-only property sweep (see PropertyExplorer), shown in a dialog to copy.
     val explorerReport: String? = null,
+    // The scale-calibration dialog (see CalibrationScale) for a Family A model: open while non-null.
+    val calibration: CalibrationState? = null,
 ) {
     /** The scooter reports its "Ruhezustand" (sleep state, looks switched off): its battery and ride values are then
      * the last ones from before, not live - the dashboard shows "Standby" instead of them until it wakes up. */

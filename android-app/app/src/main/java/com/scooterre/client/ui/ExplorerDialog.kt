@@ -17,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,7 +29,9 @@ import com.scooterre.client.viewmodel.UiState
 fun ExplorerDialog(state: UiState, onDismiss: () -> Unit) {
     val report = state.explorerReport ?: return
     val s = strings(state.language)
+    val rs = reportStrings(state.language)
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(s.explorerTitle) },
@@ -40,6 +43,14 @@ fun ExplorerDialog(state: UiState, onDismiss: () -> Unit) {
                         Text(report, fontFamily = FontFamily.Monospace, fontSize = 11.sp, lineHeight = 14.sp)
                     }
                 }
+                TextButton(onClick = {
+                    openGithubIssue(
+                        context, uriHandler,
+                        "Compatibility report: ${state.activeModel ?: "unknown model"}",
+                        diagnosticsReport(context, state) + "\n\n" + report,
+                        rs.reportCopiedPasteHint,
+                    )
+                }) { Text(rs.reportOnGithubButton) }
             }
         },
         confirmButton = {

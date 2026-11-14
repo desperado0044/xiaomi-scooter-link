@@ -35,6 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.core.content.FileProvider
 import com.scooterre.client.protocol.BackupBundle
+import com.scooterre.client.protocol.ModelSupport
+import com.scooterre.client.protocol.SpecProfiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -96,6 +98,7 @@ data class SettingsActions(
     val onBackupCreated: () -> Unit,
     val onDismissBackupMessage: () -> Unit,
     val onExplore: () -> Unit,
+    val onCalibrate: () -> Unit,
     val onSyncAllToWatch: (onResult: (Boolean) -> Unit) -> Unit,
 )
 
@@ -267,6 +270,11 @@ fun AppSettingsContent(state: UiState, s: AppStrings, settings: SettingsActions,
             if (state.screen == Screen.DASHBOARD) {
                 TextButton(onClick = settings.onExplore) { Text(s.exploreButton) }
                 Text(s.exploreHint, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (SpecProfiles.supportOf(state.activeModel) == ModelSupport.READ_ONLY) {
+                    val rs = reportStrings(state.language)
+                    TextButton(onClick = settings.onCalibrate) { Text(rs.calibrateButton) }
+                    Text(rs.calibrateHint, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }

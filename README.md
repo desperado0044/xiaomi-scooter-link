@@ -96,8 +96,11 @@ happens to answer plausibly, changes stay possible. Use only the tested models u
 **Feedback (optional):** if you own an untested or unsupported model, the app can help: in the app settings,
 "Explore values (read only)" asks the scooter which values it offers — without writing anything — and creates a
 text you can copy; "Copy diagnostics" adds app, phone and scooter model and the latest log. Both leave out serial
-numbers, keys and MAC addresses. Posting the text in an issue helps to add your model. There is no obligation, and
-no promise of support or of a schedule — this is a hobby project.
+numbers, keys and MAC addresses. For the Elite/5 Plus/6-series models (the ones with their own unscaled table),
+"Calibrate scaling" additionally compares each raw value against what the Xiaomi Home app shows for the same
+reading right now, and suggests the matching scale factor. Either report has its own "Report on GitHub" button
+that opens a pre-filled issue in your browser — the app never posts anything by itself, you sign in and submit it.
+There is no obligation, and no promise of support or of a schedule — this is a hobby project.
 
 ## Features
 

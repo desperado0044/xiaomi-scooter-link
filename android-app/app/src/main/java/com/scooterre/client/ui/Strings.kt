@@ -848,6 +848,47 @@ fun propertyName(name: String, lang: Lang): String =
     (if (lang == Lang.DE) PROPERTY_NAMES_DE else PROPERTY_NAMES_EN)[name]
         ?: if (name.startsWith("A_")) name.removePrefix("A_").lowercase().replace('_', ' ') else name
 
+/** Strings for the "report on GitHub" flow (ExplorerDialog, CalibrationDialog) - kept out of the
+ * main [AppStrings] DE/EN instances on purpose: those two constructor calls are already large
+ * enough that growing them further once pushed a class past the JVM's per-method bytecode limit
+ * (ResolveLangTest started failing with ClassFormatError/NoClassDefFoundError - this file's class
+ * failed to load at all, not a logic bug) - same reason [PROPERTY_NAMES_DE]/[PROPERTY_NAMES_EN]
+ * above live as their own lookup instead of being inlined into AppStrings. */
+data class ReportStrings(
+    val reportOnGithubButton: String,
+    val reportCopiedPasteHint: String,
+    val calibrateButton: String,
+    val calibrateHint: String,
+    val calibrationTitle: String,
+    val calibrationIntro: String,
+    val calibrationNoCandidates: String,
+    val calibrationFieldHint: String,
+)
+
+private val REPORT_STRINGS_DE = ReportStrings(
+    reportOnGithubButton = "Auf GitHub melden",
+    reportCopiedPasteHint = "Text kopiert - füge ihn in das Issue ein, das sich gerade öffnet.",
+    calibrateButton = "Skalierung kalibrieren",
+    calibrateHint = "Für Modelle ohne bestätigte Skalierung: vergleicht die Rohwerte mit dem, was die Xiaomi-Home-App gerade anzeigt, und erzeugt einen Meldetext.",
+    calibrationTitle = "Skalierung kalibrieren",
+    calibrationIntro = "Öffne parallel die Xiaomi-Home-App und trage ein, was sie für denselben Wert gerade anzeigt. Leere Felder werden übersprungen.",
+    calibrationNoCandidates = "Keine Rohwerte vorhanden - zuerst die Übersicht einmal laden lassen, dann hierher zurückkommen.",
+    calibrationFieldHint = "Wert in Xiaomi Home",
+)
+
+private val REPORT_STRINGS_EN = ReportStrings(
+    reportOnGithubButton = "Report on GitHub",
+    reportCopiedPasteHint = "Copied - paste it into the issue that just opened.",
+    calibrateButton = "Calibrate scaling",
+    calibrateHint = "For models without a confirmed scale: compares the raw values against what the Xiaomi Home app shows right now, and builds a report text.",
+    calibrationTitle = "Calibrate scaling",
+    calibrationIntro = "Open the Xiaomi Home app alongside this one and enter what it shows for the same reading right now. Empty fields are skipped.",
+    calibrationNoCandidates = "No raw values yet - let the overview load once, then come back here.",
+    calibrationFieldHint = "Value in Xiaomi Home",
+)
+
+fun reportStrings(lang: Lang): ReportStrings = if (lang == Lang.DE) REPORT_STRINGS_DE else REPORT_STRINGS_EN
+
 /** Human-readable label for a scooter model, keyed by the Xiaomi cloud's own model string (see
  * [com.scooterre.client.protocol.SpecProfiles]) - falls back to a generic name for a device that
  * was only ever connected via a saved key (no fresh cloud login, so the model was never learned)

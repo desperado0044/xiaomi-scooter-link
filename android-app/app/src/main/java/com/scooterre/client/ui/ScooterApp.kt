@@ -118,6 +118,7 @@ fun ScooterApp(viewModel: ScooterViewModel = viewModel()) {
         onBackupCreated = viewModel::markBackupDone,
         onDismissBackupMessage = viewModel::dismissBackupMessage,
         onExplore = viewModel::exploreValues,
+        onCalibrate = viewModel::openCalibration,
         onSyncAllToWatch = viewModel::syncAllDevicesToWatch,
         onSetInsuranceReminder = { enable ->
             if (!enable) {
@@ -227,6 +228,7 @@ fun ScooterApp(viewModel: ScooterViewModel = viewModel()) {
                     Screen.DOCUMENT_VIEWER -> DocumentViewerScreen(state, documentActions, viewModel::navigateBack)
                 }
                 ExplorerDialog(state, viewModel::dismissExplorer)
+                CalibrationDialog(state, viewModel::setCalibrationReference, viewModel::dismissCalibration)
             }
         }
     }

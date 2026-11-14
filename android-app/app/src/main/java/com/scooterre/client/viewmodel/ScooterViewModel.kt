@@ -45,6 +45,7 @@ import com.scooterre.client.protocol.SpecReadResult
 import com.scooterre.client.protocol.SpecType
 import com.scooterre.client.protocol.STATUS_PROPERTY_NOT_EXIST
 import com.scooterre.client.protocol.encodeValue
+import com.scooterre.client.protocol.CalibrationScale
 import com.scooterre.client.protocol.BundleCrypto
 import com.scooterre.client.protocol.BundleFormats
 import com.scooterre.client.protocol.DocumentsBundle
@@ -1228,6 +1229,25 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun dismissExplorer() = _state.update { it.copy(explorerReport = null) }
+
+    /** Opens the scale-calibration dialog (see [CalibrationScale]) for the connected Family A model:
+     * lists every FLOAT property this app has no confirmed scale for, together with whatever raw
+     * value the normal [refreshAll] poll already read - this never starts its own BLE round trip,
+     * it only reads what [UiState.values] already has. */
+    fun openCalibration() {
+        val state = _state.value
+        val candidates = state.activeSpecProfile.all
+            .filter { it.type == SpecType.FLOAT }
+            .mapNotNull { property -> (state.values[property.name]?.takeIf { it.ok }?.value as? Float)?.let { property.name to it } }
+        _state.update { it.copy(calibration = CalibrationState(candidates = candidates)) }
+    }
+
+    fun setCalibrationReference(name: String, text: String) = _state.update { state ->
+        val calibration = state.calibration ?: return@update state
+        state.copy(calibration = calibration.copy(references = calibration.references + (name to text)))
+    }
+
+    fun dismissCalibration() = _state.update { it.copy(calibration = null) }
 
     fun dismissError() = _state.update { it.copy(error = null, needsPin = false) }
 
