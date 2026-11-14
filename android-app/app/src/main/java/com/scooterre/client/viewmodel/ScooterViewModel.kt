@@ -22,6 +22,7 @@ import com.scooterre.client.protocol.DeviceExport
 import com.scooterre.client.protocol.DeviceRegistry
 import com.scooterre.client.protocol.DocumentStore
 import com.scooterre.client.protocol.KnownDevice
+import com.scooterre.client.protocol.LayoutCheck
 import com.scooterre.client.protocol.MiProtocol
 import com.scooterre.client.protocol.ModelSupport
 import com.scooterre.client.protocol.RideWindow
@@ -1098,20 +1099,26 @@ class ScooterViewModel(application: Application) : AndroidViewModel(application)
 
     private var layoutChecked = false
 
-    /** Once per connection: if the scooter *answers* every basic reading with a refusal ("no such property"), it does
-     * not use this app's property table (an unknown model, e.g. added without model information) - writing to it
-     * could change the wrong things, so changes are blocked and the person is told. A timeout says nothing about the
-     * table (a bad moment on the radio), so it is checked again on the next refresh instead. */
+    /** Once per connection: if the scooter answers every basic reading with either a refusal ("no such
+     * property") or an implausible value (see [LayoutCheck] - a generic MIoT device-info string
+     * reinterpreted as a small number can otherwise slip through as "the read succeeded"), it does not use
+     * this app's property table (an unknown model, e.g. added without model information) - writing to it
+     * could change the wrong things, so changes are blocked and the person is told. A timeout says nothing
+     * about the table (a bad moment on the radio), so it is checked again on the next refresh instead. */
     private fun checkLayout() {
         if (layoutChecked) return
         val values = _state.value.values
-        val results = listOf("BATTERY_LEVEL", "RIDING_MODE", "TOTAL_MILEAGE").mapNotNull { values[it] }
-        if (results.any { it.ok }) {
+        val outcomes = listOf(
+            LayoutCheck.batteryLevel(values["BATTERY_LEVEL"]),
+            LayoutCheck.ridingMode(values["RIDING_MODE"]),
+            LayoutCheck.totalMileage(values["TOTAL_MILEAGE"]),
+        )
+        if (outcomes.any { it == LayoutCheck.Outcome.PLAUSIBLE }) {
             layoutChecked = true
             Diagnostics.note("layout check: ok")
-        } else if (results.size == 3 && results.all { it.status != -1 }) {
+        } else if (outcomes.all { it == LayoutCheck.Outcome.IMPLAUSIBLE }) {
             layoutChecked = true
-            Diagnostics.note("layout check: the scooter refused all basic readings (status ${results.joinToString { "0x%04x".format(it.status and 0xFFFF) }})")
+            Diagnostics.note("layout check: the scooter refused or returned implausible values for every basic reading")
             _state.update { it.copy(layoutMismatch = true, error = s.layoutMismatchError) }
         } else {
             Diagnostics.note("layout check: inconclusive (timeouts), will check again")
